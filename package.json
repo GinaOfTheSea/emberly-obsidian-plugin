@@ -1,6 +1,6 @@
 {
   "name": "emberly-maps",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Open Markdown notes as Emberly-style mind maps in Obsidian.",
   "license": "AGPL-3.0-only",
   "private": true,
