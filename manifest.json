@@ -1,0 +1,9 @@
+{
+  "id": "emberly-maps",
+  "name": "Emberly Maps",
+  "version": "0.1.0",
+  "minAppVersion": "1.13.7",
+  "description": "Open Markdown notes as visual Emberly-style mind maps.",
+  "author": "Emberly AS",
+  "isDesktopOnly": true
+}

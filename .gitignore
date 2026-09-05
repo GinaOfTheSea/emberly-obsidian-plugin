@@ -1,0 +1,13 @@
+node_modules/
+.testvaults/
+main.js
+*.log
+.DS_Store
+coverage/
+tests/browser/engine-smoke.js
+emberly-maps-*.zip
+/styles.css
+/dist/
+.env
+.env.*
+!.env.example

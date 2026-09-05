@@ -1,0 +1,66 @@
+{
+  "name": "emberly-maps",
+  "version": "0.1.0",
+  "description": "Open Markdown notes as Emberly-style mind maps in Obsidian.",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GinaOfTheSea/emberly-obsidian-plugin.git"
+  },
+  "bugs": "https://github.com/GinaOfTheSea/emberly-obsidian-plugin/issues",
+  "homepage": "https://github.com/GinaOfTheSea/emberly-obsidian-plugin#readme",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run release:check && npm run typecheck && node esbuild.config.mjs production",
+    "lint": "eslint . && eslint -c config/eslint.legacy.config.mjs src/emberly-engine src/topics/fractions.js",
+    "test": "vitest run --config config/vitest.config.ts",
+    "verify": "npm run lint && npm test && npm run build",
+    "test:browser": "node scripts/build/build-engine-smoke.mjs && node tests/browser/run-engine-text.cjs && node tests/browser/run-engine-windows.cjs",
+    "release:check": "node scripts/release/release-metadata.mjs",
+    "release:prepare": "npm run verify && npm run test:browser && node scripts/release/prepare-release.mjs",
+    "version": "node scripts/release/version-bump.mjs && git add manifest.json versions.json"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@types/node": "^22.15.17",
+    "esbuild": "^0.25.5",
+    "eslint": "^10.9.1",
+    "eslint-plugin-obsidianmd": "^0.4.2",
+    "globals": "^17.12.0",
+    "happy-dom": "^20.13.2",
+    "obsidian": "1.13.1",
+    "playwright": "1.62.1",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^3.2.4",
+    "yaml": "^2.9.0"
+  },
+  "dependencies": {
+    "@pixi/canvas-display": "^6.5.1",
+    "@pixi/canvas-graphics": "^6.5.1",
+    "@pixi/canvas-renderer": "^6.5.1",
+    "@pixi/canvas-sprite": "^6.5.1",
+    "@pixi/constants": "^6.5.1",
+    "@pixi/core": "^6.5.1",
+    "@pixi/display": "^6.5.1",
+    "@pixi/graphics": "^6.5.1",
+    "@pixi/interaction": "^6.5.1",
+    "@pixi/math": "^6.5.1",
+    "@pixi/settings": "^6.5.1",
+    "@pixi/sprite": "^6.5.1",
+    "@pixi/text": "^6.5.1",
+    "@pixi/ticker": "^6.5.1",
+    "@pixi/utils": "^6.5.1",
+    "emoji-regex": "^9.2.2",
+    "events": "^3.3.0",
+    "pixi-viewport": "^4.37.0",
+    "pixi.js": "^6.5.1"
+  }
+}

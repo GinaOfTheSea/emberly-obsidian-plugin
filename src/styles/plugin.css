@@ -1,0 +1,777 @@
+.workspace-leaf-content[data-type="emberly-map-view"] .view-content { padding: 0; overflow: hidden; }
+.emberly-map-view {
+  --emberly-node-accent: var(--interactive-accent);
+  --emberly-map-background: #f5f7f6;
+  position: relative; display: flex; flex-direction: column;
+  container: emberly-map / inline-size;
+  min-width: 0; min-height: 0; height: 100%; overflow: hidden;
+  color: var(--text-normal); background: var(--emberly-map-background);
+}
+.theme-dark .emberly-map-view { --emberly-map-background: #202020; }
+/* Legacy GButton: raised paper groups with square internal buttons, not a ribbon.
+   Reserve the top controls' height so they never cover topics in narrow panes. */
+.emberly-toolbar {
+  flex: 0 0 auto; min-width: 0; padding: 8px; display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start; gap: 8px 16px;
+  border: 0; background: transparent; z-index: 2;
+  font-family: "IBM Plex Sans", var(--font-interface);
+}
+.emberly-toolbar-actions { grid-column: 3; grid-row: 1; min-width: 0; max-width: 100%; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+/* Equal side tracks keep the three topic buttons centered on the map itself,
+   independently of the map name and the width of the native-editor controls. */
+.emberly-topic-actions { grid-column: 2; grid-row: 1; justify-self: center; }
+.emberly-button-group {
+  display: inline-flex; flex: 0 0 auto; align-items: center; overflow: hidden;
+  border: 1px solid var(--background-modifier-border); border-radius: 4px;
+  background: var(--background-primary);
+  box-shadow: 0 2px 4px rgba(20, 32, 43, .12), 0 4px 10px rgba(20, 32, 43, .06);
+}
+.emberly-map-view .emberly-button-group > button {
+  display: flex; flex: 0 0 auto; align-items: center; justify-content: center;
+  width: 48px; min-width: 0; height: 48px; padding: 0;
+  border: 0; border-radius: 0; box-shadow: none;
+  color: var(--text-normal); background: transparent;
+  font: inherit; cursor: pointer;
+}
+.emberly-map-view .emberly-button-group > button:hover:not(:disabled),
+.emberly-map-view .emberly-button-group > button[aria-pressed="true"] {
+  background: var(--background-modifier-hover);
+}
+.emberly-map-view .emberly-button-group > button:active:not(:disabled) { background: var(--background-modifier-active-hover); }
+.emberly-map-view .emberly-button-group > button:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: -3px; }
+.emberly-map-view .emberly-button-group > button:disabled { color: var(--text-faint); opacity: .5; cursor: default; }
+.emberly-button-group svg { width: 22px; height: 22px; flex-shrink: 0; }
+.emberly-button-group .emberly-legacy-tree-icon { width: 24px; height: 24px; fill: currentColor; stroke: none; }
+.emberly-map-navigation { grid-column: 1; grid-row: 1; justify-self: start; flex: 0 1 auto; min-width: 0; max-width: 100%; }
+/* A centered second row avoids collisions in narrow map panes. */
+@container emberly-map (max-width: 480px) {
+  .emberly-toolbar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .emberly-toolbar-actions { grid-column: 2; }
+  .emberly-topic-actions { grid-column: 1 / -1; grid-row: 2; }
+}
+.emberly-map-view .emberly-button-group > .emberly-map-picker {
+  flex: 1 1 auto; width: auto; max-width: 280px; padding: 0 14px;
+  gap: 8px;
+  font-size: 15px; font-weight: 500;
+}
+.emberly-map-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.emberly-map-chevron { display: flex; flex-shrink: 0; }
+.emberly-map-chevron svg { width: 16px; height: 16px; }
+.emberly-map-view .emberly-viewport-controls {
+  position: absolute; bottom: 8px; left: 8px; z-index: 2;
+  border-color: transparent; box-shadow: none;
+  background: color-mix(in srgb, var(--emberly-map-background) 92%, transparent);
+}
+.emberly-map-view .emberly-viewport-controls > button { width: 40px; height: 40px; }
+.emberly-viewport-controls svg { width: 20px; height: 20px; }
+.emberly-map-status {
+  position: absolute; right: 12px; bottom: 16px; z-index: 2;
+  max-width: min(420px, calc(100% - 156px)); max-height: 4em; overflow: hidden;
+  padding: 2px 6px; border-radius: 4px; pointer-events: none;
+  color: var(--text-muted); background: var(--emberly-map-background);
+  font-family: "IBM Plex Sans", var(--font-interface); font-size: var(--font-ui-smaller); text-align: right;
+}
+.emberly-picker-meta { color: var(--text-muted); font-size: var(--font-ui-smaller); }
+.emberly-warning { margin: 10px 14px 0; padding: 8px 10px; border: 1px solid var(--color-orange); border-radius: var(--radius-s); color: var(--text-warning); background: rgba(var(--color-orange-rgb), .09); font-size: var(--font-ui-smaller); }
+.emberly-canvas { height: calc(100% - 59px); padding: 42px 44px 120px; display: grid; grid-template-columns: minmax(260px, 1fr) minmax(180px, auto) minmax(260px, 1fr); gap: 34px; align-items: start; overflow: auto; background-image: radial-gradient(circle, var(--background-modifier-border) 1px, transparent 1px); background-size: 22px 22px; }
+.emberly-center { position: sticky; top: 42px; padding-top: 28px; z-index: 2; }
+.emberly-side { display: flex; flex-direction: column; gap: 13px; }
+.emberly-side-left { align-items: flex-end; }
+.emberly-side-right { align-items: flex-start; }
+.emberly-branch { width: min(100%, 360px); }
+.emberly-side-left .emberly-branch { text-align: right; }
+.emberly-node { position: relative; display: inline-flex; min-width: 120px; max-width: 320px; padding: 9px 12px; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--background-modifier-border); border-left: 3px solid var(--emberly-node-accent); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.08); background: var(--background-primary-alt); cursor: default; user-select: none; transition: border-color 100ms ease, box-shadow 100ms ease, transform 100ms ease; }
+.emberly-node:hover { border-color: var(--interactive-accent); transform: translateY(-1px); }
+.emberly-node.is-selected { border-color: var(--interactive-accent); box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), .18), 0 3px 10px rgba(0,0,0,.1); }
+.emberly-node-title { overflow-wrap: anywhere; }
+.emberly-node-hint { color: var(--text-faint); font-size: 10px; }
+.emberly-root { min-width: 180px; padding: 14px 18px; justify-content: center; border-left-width: 1px; border-color: var(--interactive-accent); border-radius: 12px; color: var(--text-on-accent); background: var(--interactive-accent); font-weight: var(--font-semibold); text-align: center; }
+.emberly-children { margin-top: 9px; margin-left: calc(13px + (var(--emberly-depth, 0) * 2px)); padding-left: 12px; display: flex; flex-direction: column; gap: 9px; border-left: 1px solid var(--background-modifier-border); }
+.emberly-side-left .emberly-children { margin-right: calc(13px + (var(--emberly-depth, 0) * 2px)); margin-left: 0; padding-right: 12px; padding-left: 0; align-items: flex-end; border-right: 1px solid var(--background-modifier-border); border-left: 0; }
+.emberly-empty { padding: 48px 24px; color: var(--text-muted); text-align: center; }
+.emberly-picker-title { font-weight: var(--font-medium); }
+.emberly-picker-create .emberly-picker-title { display: flex; align-items: center; gap: var(--size-2-2); }
+.emberly-picker-create-icon { display: inline-flex; color: var(--interactive-accent); }
+.emberly-picker-create-icon svg { width: var(--icon-s); height: var(--icon-s); }
+.emberly-folder-picker-title { display: flex; align-items: center; gap: var(--size-2-2); }
+.emberly-topic-names-modal > label { display: block; margin-bottom: 8px; font-weight: var(--font-medium); }
+.emberly-topic-name-entry { padding: 10px; border: 1px solid var(--background-modifier-border); border-radius: var(--radius-m); background: var(--background-primary); }
+.emberly-topic-name-entry:focus-within { border-color: var(--interactive-accent); box-shadow: 0 0 0 1px var(--interactive-accent); }
+.emberly-topic-name-chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 30vh; overflow: auto; margin-bottom: 8px; }
+.emberly-topic-name-chips:empty { display: none; }
+.emberly-topic-name-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 6px 4px 10px; border-radius: var(--radius-s); background: var(--background-secondary); }
+.emberly-topic-name-chip > span { min-width: 0; overflow-wrap: anywhere; }
+.emberly-topic-name-chip > button { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 3px; box-shadow: none; border: none; background: transparent; color: var(--text-muted); }
+.emberly-topic-name-chip > button:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
+.emberly-topic-name-chip svg { width: 16px; height: 16px; }
+.emberly-topic-name-entry > input { width: 100%; min-width: 0; border: none; box-shadow: none; background: transparent; }
+.emberly-topic-name-entry > input:focus { box-shadow: none; }
+.emberly-topic-names-help { color: var(--text-muted); font-size: var(--font-ui-small); }
+.emberly-topic-names-error { color: var(--text-error); overflow-wrap: anywhere; }
+.emberly-topic-names-error:empty { display: none; }
+.emberly-topic-names-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 18px; }
+@media (max-width: 800px) {
+  .emberly-canvas { padding: 24px 16px 90px; grid-template-columns: 1fr; gap: 18px; }
+  .emberly-center { position: static; grid-row: 1; padding: 0; text-align: center; }
+  .emberly-side-left { grid-row: 2; align-items: flex-start; }
+  .emberly-side-left .emberly-branch { text-align: left; }
+  .emberly-side-left .emberly-children { margin-right: 0; margin-left: 13px; padding-right: 0; padding-left: 12px; align-items: flex-start; border-right: 0; border-left: 1px solid var(--background-modifier-border); }
+  .emberly-side-right { grid-row: 3; }
+}
+
+/* The production map surface uses Emberly's original Pixi renderer. */
+.emberly-map-view .emberly-canvas {
+  position: relative;
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  display: block;
+  overflow: hidden;
+  touch-action: none;
+  background: var(--emberly-map-background);
+}
+.emberly-map-view .emberly-warning { flex: 0 0 auto; }
+.emberly-map-view .emberly-canvas canvas { display: block; width: 100%; height: 100%; }
+
+/* Experimental single native Markdown pane. Native editor/reading elements stay
+   where Obsidian put them; only our siblings and this scoped grid are added. */
+.workspace-leaf-content.emberly-integrated-pane { container-type: inline-size; }
+.workspace-leaf-content.emberly-integrated-pane > .view-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6px var(--emberly-inspector-width, 380px);
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.emberly-integrated-pane > .view-content > .emberly-integrated-map {
+  grid-area: 1 / 1 / 3 / 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  outline: none;
+}
+.emberly-integrated-map .emberly-toolbar { flex: 0 0 auto; flex-wrap: wrap; gap: 8px; }
+.emberly-integrated-map .emberly-toolbar-actions { flex-wrap: wrap; }
+.emberly-integrated-map .emberly-canvas,
+.emberly-integrated-map .emberly-warning + .emberly-canvas { flex: 1 1 auto; min-height: 0; height: auto; }
+.emberly-integrated-pane > .view-content > .emberly-integrated-divider {
+  grid-area: 1 / 2 / 3 / 3;
+  background: var(--background-modifier-border);
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 3;
+}
+.emberly-integrated-divider:hover,
+.emberly-integrated-divider:focus-visible { background: var(--interactive-accent); outline: none; }
+.emberly-integrated-resizing { cursor: col-resize; user-select: none; }
+.emberly-integrated-pane > .view-content > .emberly-topic-chrome {
+  grid-area: 1 / 3;
+  min-width: 0;
+  max-height: 65vh;
+  overflow: auto;
+}
+.emberly-integrated-pane > .view-content > .markdown-source-view,
+.emberly-integrated-pane > .view-content > .markdown-reading-view,
+.emberly-integrated-pane > .view-content > .emberly-map-settings-panel,
+.emberly-integrated-pane > .view-content > .emberly-topic-resource-panel {
+  grid-area: 2 / 3;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+.emberly-integrated-pane.emberly-resource-creating > .view-content > .emberly-topic-resource-panel { grid-row: 1 / 3; }
+.emberly-integrated-pane.emberly-resource-moving > .view-content > .emberly-topic-chrome { grid-row: 1 / 3; max-height: none; }
+.emberly-integrated-pane.emberly-resource-moving > .view-content > .markdown-source-view,
+.emberly-integrated-pane.emberly-resource-moving > .view-content > .markdown-reading-view { display: none !important; }
+.workspace-leaf-content.emberly-integrated-collapsed > .view-content { grid-template-columns: minmax(0, 1fr); }
+.emberly-integrated-collapsed > .view-content > :not(.emberly-integrated-map) { display: none !important; }
+@container (max-width: 620px) {
+  .workspace-leaf-content.emberly-integrated-pane > .view-content {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(180px, 42%) auto minmax(0, 1fr);
+  }
+  .emberly-integrated-pane > .view-content > .emberly-integrated-map { grid-area: 1 / 1; }
+  .emberly-integrated-pane > .view-content > .emberly-integrated-divider { display: none; }
+  .emberly-integrated-pane > .view-content > .emberly-topic-chrome { grid-area: 2 / 1; max-height: 25vh; }
+  .emberly-integrated-pane > .view-content > .markdown-source-view,
+  .emberly-integrated-pane > .view-content > .markdown-reading-view,
+  .emberly-integrated-pane > .view-content > .emberly-map-settings-panel,
+  .emberly-integrated-pane > .view-content > .emberly-topic-resource-panel { grid-area: 3 / 1; }
+  .emberly-integrated-pane.emberly-resource-creating > .view-content > .emberly-topic-resource-panel,
+  .emberly-integrated-pane.emberly-resource-moving > .view-content > .emberly-topic-chrome { grid-row: 2 / 4; }
+  .workspace-leaf-content.emberly-integrated-collapsed > .view-content { grid-template-rows: minmax(0, 1fr); }
+}
+
+/* Only native Markdown leaves owned by an Emberly map get this presentation.
+   Notes, global Obsidian settings, and ordinary tabs are never rewritten. */
+.workspace-leaf-content.emberly-topic-pane {
+  --font-text: "IBM Plex Sans", var(--font-interface);
+  --file-margins: 20px 24px;
+  --file-margins-x: 24px;
+  --file-margins-y: 20px;
+  --h1-size: 1.4em;
+  --h2-size: 1.2em;
+  --h3-size: 1.1em;
+  --h4-size: 1.05em;
+  --h5-size: 1em;
+  --h6-size: 1em;
+  --h1-line-height: 1.3;
+  --heading-spacing: 1.3em;
+  --inline-title-size: 1.4em;
+  --inline-title-line-height: 1.3;
+  --inline-title-margin-bottom: 0.65em;
+  --metadata-display-reading: none;
+  --metadata-display-editing: none;
+}
+
+/* Adapted from Emberly's NodeView and ResourcePreviewItem: 49px tabs,
+   4px indicator, 16px row spacing and 88x64 thumbnails. No editor replacement. */
+.emberly-topic-pane > .view-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.emberly-topic-pane > .view-content > .markdown-source-view,
+.emberly-topic-pane > .view-content > .markdown-reading-view {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+.emberly-topic-pane.emberly-topic-show-resources > .view-content > .markdown-source-view,
+.emberly-topic-pane.emberly-map-show-settings > .view-content > .markdown-source-view,
+.emberly-topic-pane.emberly-map-show-settings > .view-content > .markdown-reading-view,
+.emberly-topic-pane.emberly-topic-show-resources > .view-content > .markdown-reading-view {
+  display: none !important;
+}
+.emberly-topic-chrome,
+.emberly-map-settings-panel,
+.emberly-topic-resource-panel {
+  font-family: "IBM Plex Sans", var(--font-interface);
+  color: var(--text-normal);
+  background: var(--background-primary);
+}
+.emberly-topic-chrome { flex: 0 0 auto; }
+.emberly-topic-chrome { position: relative; z-index: 2; }
+.emberly-topic-header { position: relative; padding: 20px 16px 8px; }
+.emberly-topic-header .emberly-topic-header-title {
+  margin: 0 0 14px;
+  padding: 0 12px;
+  font-family: "IBM Plex Sans", var(--font-interface);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.emberly-topic-header-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 8px; }
+.emberly-topic-header-controls > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 32px;
+  padding: 4px;
+  border: 0;
+  border-radius: 4px;
+  box-shadow: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.emberly-topic-header-controls > button:hover,
+.emberly-topic-header-controls > button[aria-expanded="true"] { background: var(--background-modifier-hover); }
+.emberly-topic-header-controls > button:disabled { opacity: 0.6; }
+.emberly-topic-header-chevron svg { width: 14px; height: 14px; display: block; }
+.emberly-topic-color-chip { display: inline-block; width: 36px; height: 12px; border-radius: 6px; background-color: var(--emberly-topic-color); }
+.emberly-topic-rating-dots { display: inline-flex; align-items: center; gap: 1px; }
+.emberly-topic-rating-dots svg { display: block; width: 14px; height: 14px; fill: #FFCF54; stroke: #FFCF54; }
+.emberly-topic-plan-heart svg,
+.emberly-topic-plan-icon svg { display: block; width: 16px; height: 16px; }
+.emberly-topic-plan-heart svg { color: #FF3C38; fill: #FF3C38; }
+.emberly-topic-header-popup {
+  position: fixed;
+  z-index: var(--layer-menu, 100);
+  box-sizing: border-box;
+  margin: 0;
+  width: var(--emberly-popup-width, 356px);
+  max-height: var(--emberly-popup-height, 360px);
+  left: var(--emberly-popup-left, 8px);
+  top: var(--emberly-popup-top, 8px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  font-family: "IBM Plex Sans", var(--font-interface);
+  font-size: 14px;
+  color: var(--text-normal);
+  padding: 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-s);
+  background: var(--background-primary);
+}
+.emberly-topic-header-popup[hidden] { display: none !important; }
+.emberly-topic-popup-label { margin-bottom: 12px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.emberly-topic-color-palette { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+.emberly-topic-color-palette > button {
+  width: 100%;
+  max-width: 28px;
+  height: auto;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: none;
+  background-color: var(--emberly-topic-color);
+}
+.emberly-topic-color-palette > button[aria-pressed="true"] { outline: 3px solid var(--text-normal); outline-offset: 2px; }
+.emberly-topic-custom-color { display: flex; align-items: center; gap: 8px; }
+.emberly-topic-custom-color input[type="color"] { flex: 0 0 32px; width: 32px; height: 30px; padding: 0; border: 0; }
+.emberly-topic-custom-color input[type="text"] { min-width: 0; width: 100%; flex: 1; font-family: var(--font-monospace); }
+.emberly-topic-custom-color input[aria-invalid="true"] { border-color: var(--text-error); }
+.emberly-topic-header-popup .emberly-topic-popup-action {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 12px;
+  padding: 8px;
+  border: 0;
+  box-shadow: none;
+  background: var(--background-secondary);
+  font: inherit;
+  font-size: 14px;
+  white-space: normal;
+}
+.emberly-topic-rating-picker { display: flex; justify-content: center; gap: 4px; }
+.emberly-topic-rating-picker > button { display: grid; place-items: center; width: 36px; height: 36px; padding: 4px; background: transparent; box-shadow: none; border: 0; }
+.emberly-topic-rating-picker svg { width: 24px; height: 24px; stroke: var(--text-faint); }
+.emberly-topic-rating-picker .is-filled svg,
+.emberly-topic-rating-picker > button:hover svg { stroke: #FFCF54; fill: #FFCF54; }
+.emberly-topic-header-popup .emberly-topic-plan-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: auto;
+  padding: 10px 8px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-normal);
+}
+.emberly-topic-header-popup .emberly-topic-plan-option:hover,
+.emberly-topic-header-popup .emberly-topic-plan-option[aria-pressed="true"] { background: var(--background-modifier-hover); }
+.emberly-topic-header button:focus-visible,
+.emberly-topic-header-popup button:focus-visible,
+.emberly-topic-header-popup input:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+.emberly-topic-header-status { margin-top: 8px; font-size: 12px; text-align: center; color: var(--text-muted); overflow-wrap: anywhere; }
+.emberly-topic-header-status:empty { display: none; }
+.emberly-topic-pane.emberly-topic-with-header .inline-title { display: none !important; }
+.emberly-topic-chrome[hidden],
+.emberly-map-settings-panel[hidden],
+.emberly-topic-chrome [hidden],
+.emberly-topic-resource-panel[hidden] { display: none !important; }
+.emberly-topic-tabs {
+  display: flex;
+  min-height: 49px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.emberly-topic-tabs > button {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 49px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.emberly-topic-tabs > button[aria-selected="true"] { color: var(--text-normal); }
+.emberly-topic-tabs > button[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  max-width: 180px;
+  height: 4px;
+  margin: auto;
+  border-radius: 2px;
+  background: var(--interactive-accent);
+}
+.emberly-topic-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: auto;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 14px;
+}
+.emberly-topic-back svg { width: 16px; height: 16px; display: block; }
+.emberly-topic-resource-panel { flex: 1 1 auto; min-height: 0; overflow: auto; padding-bottom: 24px; }
+
+/* Legacy MapSettingsView: a dedicated header and visual layout choices. */
+.emberly-topic-chrome .emberly-map-settings-header {
+  margin: 0; padding: 22px 24px; font: 600 1.3em/1.4 "IBM Plex Sans", var(--font-interface);
+}
+.emberly-map-settings-panel { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 24px; }
+.emberly-map-name-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px; margin: 0 0 8px; }
+.emberly-map-name-form label { display: flex; flex-direction: column; gap: 12px; min-width: 0; font-weight: 500; }
+.emberly-map-name-form input { width: 100%; min-width: 0; height: 40px; font-weight: normal; }
+.emberly-map-name-form button { min-width: 80px; height: 40px; align-self: end; }
+.emberly-map-layout-section { border-top: 1px solid var(--background-modifier-border); padding-top: 20px; }
+.emberly-map-layout-section h3 { margin: 0 0 16px; font-size: 1em; font-weight: 500; }
+.emberly-map-layout-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.emberly-map-layout-options .emberly-map-layout-option {
+  display: flex; flex-direction: column; gap: 14px; height: auto; min-height: 110px; padding: 16px 8px;
+  background: var(--background-primary-alt); border: 3px solid transparent; border-radius: 8px; box-shadow: none;
+}
+.emberly-map-layout-option img { width: 100%; max-width: 156px; height: 64px; object-fit: contain; }
+.emberly-map-layout-options .emberly-map-layout-option[aria-pressed="true"] { border-color: var(--interactive-accent); }
+.emberly-map-layout-options .emberly-map-layout-option:focus-visible { outline: 2px solid var(--text-normal); outline-offset: 2px; }
+.emberly-map-settings-info { margin: 0 0 20px; color: var(--text-muted); font-size: var(--font-ui-small); }
+.emberly-map-layout-hint { margin-top: 12px; padding: 9px 10px; border-left: 3px solid var(--background-modifier-border-focus); border-radius: 4px; background: var(--background-secondary-alt); color: var(--text-muted); font-size: var(--font-ui-small); }
+.emberly-map-layout-hint[hidden] { display: none; }
+.emberly-map-center-section { margin-top: 24px; }
+.emberly-map-center-section[hidden], .emberly-map-center-section [hidden] { display: none; }
+.emberly-map-center-options { display: flex; gap: 8px; margin-bottom: 16px; }
+.emberly-map-center-options button { flex: 1; min-width: 0; }
+.emberly-map-center-options button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--interactive-accent); }
+.emberly-map-center-text-form { display: flex; gap: 8px; }
+.emberly-map-center-text-form input { flex: 1; min-width: 0; }
+.emberly-map-center-image-controls { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.emberly-map-center-image-controls[hidden] { display: none; }
+.emberly-map-center-preview { display: block; width: 128px; height: 128px; border-radius: 50%; object-fit: cover; margin: 0; }
+.emberly-map-settings-section { border-top: 1px solid var(--background-modifier-border); margin-top: 24px; padding-top: 20px; }
+.emberly-map-settings-section h3 { margin: 0 0 16px; font-size: 1em; font-weight: 500; }
+.emberly-map-settings-section .setting-item { border: 0; padding: 12px 0 12px 12px; }
+.emberly-map-setting-icon { display: inline-flex; vertical-align: middle; margin-right: 12px; color: var(--text-muted); }
+.emberly-map-file-actions { display: flex; flex-direction: column; gap: 8px; }
+.emberly-map-file-actions h3 { margin-bottom: 8px; }
+.emberly-map-file-actions button { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 44px; justify-content: flex-start; background: var(--background-secondary-alt); border-radius: 6px; box-shadow: none; padding: 10px 12px; height: auto; }
+.emberly-map-file-actions button:hover { background: var(--background-modifier-hover); }
+.emberly-map-file-actions .emberly-map-trash { color: var(--text-error); }
+.emberly-map-trash-files { max-height: 200px; overflow: auto; font-size: var(--font-ui-small); overflow-wrap: anywhere; }
+.emberly-map-settings-status { margin-top: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
+.emberly-resource-upload { padding: 12px 16px; border-bottom: 1px solid var(--background-modifier-border); }
+.emberly-resource-upload input[hidden] { display: none !important; }
+.emberly-resource-upload .emberly-resource-upload-button {
+  display: inline-flex; align-items: center; gap: 8px; height: auto; padding: 6px 0;
+  border: 0; box-shadow: none; background: transparent; color: var(--text-normal); font: inherit; font-size: 14px;
+}
+.emberly-resource-upload-button svg { display: block; width: 20px; height: 20px; }
+.emberly-resource-upload .emberly-resource-upload-button:hover { color: var(--interactive-accent); }
+.emberly-resource-upload-button:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 3px; }
+.emberly-resource-upload-status { margin-top: 8px; color: var(--text-muted); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.emberly-resource-upload-status:empty { display: none; }
+/* ResourceCreateView: one sidebar page, Online / Offline tabs and native forms.
+   Hide presentation only; the native Markdown editor and map stay mounted. */
+.emberly-resource-creating > .view-content > .emberly-topic-chrome,
+.emberly-resource-creating .emberly-resource-upload,
+.emberly-resource-creating .emberly-topic-resource-list,
+.emberly-resource-create-page[hidden],
+.emberly-resource-create-page [hidden] { display: none !important; }
+.emberly-resource-create-page { font-size: 14px; line-height: 1.5; }
+.emberly-resource-create-page .emberly-resource-bar > button {
+  padding: 0; border: 0; box-shadow: none; background: transparent; color: var(--text-normal);
+}
+.emberly-resource-create-page .emberly-resource-bar > button:hover { background: var(--background-modifier-hover); }
+.emberly-resource-create-page button:focus-visible,
+.emberly-resource-create-page input:focus-visible,
+.emberly-resource-create-page textarea:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+.emberly-resource-create-destination { padding: 8px 16px 0; font-size: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
+.emberly-resource-create-form { padding: 20px 16px 16px; }
+.emberly-resource-create-form h3 { margin: 0; font-size: 18px; font-weight: 600; line-height: 1.5; }
+.emberly-resource-create-intro { margin: 8px 0 28px; color: var(--text-muted); font-size: 13px; line-height: 1.6; }
+.emberly-resource-create-field { display: flex; flex-direction: column; gap: 6px; margin: 16px 0; font-size: 13px; }
+.emberly-resource-create-field > span { color: var(--text-muted); }
+.emberly-resource-create-field input,
+.emberly-resource-create-field textarea {
+  box-sizing: border-box; width: 100%; min-width: 0; min-height: 42px; padding: 10px 12px;
+  border: 1px solid var(--background-modifier-border); border-radius: 4px;
+  background: var(--background-primary); color: var(--text-normal); font: inherit; font-size: 14px;
+}
+.emberly-resource-create-field textarea { resize: vertical; min-height: 80px; }
+.emberly-resource-create-field input[aria-invalid="true"] { border-color: var(--text-error); }
+.emberly-resource-create-form .emberly-resource-create-submit {
+  display: block; width: 270px; max-width: 100%; height: auto; min-height: 40px; margin: 24px auto 0;
+  padding: 10px 16px; border-radius: 4px; box-shadow: none; font: inherit; font-weight: 500;
+}
+.emberly-resource-create-page button:disabled { opacity: .5; cursor: default; }
+.emberly-resource-create-form .emberly-resource-file-picker {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; height: auto; min-height: 180px; padding: 20px 16px; border: 1px solid var(--background-modifier-border);
+  border-radius: 4px; box-shadow: none; background: transparent; color: var(--text-muted); font: inherit;
+  white-space: normal; text-align: center;
+}
+.emberly-resource-create-form .emberly-resource-file-picker:hover { border-color: var(--text-muted); }
+.emberly-resource-file-picker svg { display: block; width: 40px; height: 40px; color: var(--text-faint); }
+.emberly-resource-file-browse { color: var(--text-normal); }
+.emberly-resource-create-form .emberly-resource-file-picker.has-files { min-height: 72px; }
+.emberly-resource-file-picker.has-files > span:first-child,
+.emberly-resource-file-picker.has-files > span:nth-child(2) { display: none; }
+.emberly-resource-selected-files > div { display: flex; align-items: center; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--background-modifier-border); }
+.emberly-resource-selected-files > div > span:nth-child(2) { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.emberly-resource-selected-files svg { display: block; width: 18px; height: 18px; color: var(--text-muted); }
+.emberly-resource-file-size { color: var(--text-muted); font-size: 12px; white-space: nowrap; }
+.emberly-resource-create-form .emberly-resource-clear-files { margin-top: 8px; padding: 4px 0; box-shadow: none; background: transparent; color: var(--text-muted); font: inherit; font-size: 12px; }
+.emberly-resource-create-help { margin-top: 12px; color: var(--text-muted); font-size: 12px; line-height: 1.6; }
+.emberly-resource-create-status { padding: 0 16px 16px; font-size: 13px; color: var(--text-muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.emberly-resource-create-status:empty { display: none; }
+.emberly-resource-drag-over .emberly-topic-resource-panel { outline: 2px dashed var(--interactive-accent); outline-offset: -4px; background: var(--background-primary-alt); }
+.emberly-topic-pane.emberly-resource-moving .emberly-topic-chrome > :not(.emberly-resource-move-picker) { display: none !important; }
+.emberly-resource-move-picker { padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow: auto; }
+.emberly-resource-move-picker h3, .emberly-resource-move-picker p { margin: 0; }
+.emberly-resource-move-picker p { color: var(--text-muted); font-size: 13px; }
+.emberly-resource-move-picker input, .emberly-resource-move-picker select { width: 100%; min-height: 36px; }
+.emberly-resource-move-results { overflow: auto; max-height: 34vh; min-height: 80px; }
+.emberly-resource-move-results button { display: block; width: 100%; height: auto; min-height: 36px; padding: 8px; white-space: normal; text-align: left; overflow-wrap: anywhere; box-shadow: none; background: transparent; }
+.emberly-resource-move-results button:hover { background: var(--background-modifier-hover); }
+.emberly-resource-move-picker :focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: -2px; }
+.emberly-resource-move-picker [role="status"] { font-size: 13px; overflow-wrap: anywhere; }
+.emberly-topic-resource-panel .emberly-resource-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  width: calc(100% - 16px);
+  height: auto;
+  margin: 0 8px;
+  padding: 16px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  box-shadow: none;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+}
+.emberly-topic-resource-panel .emberly-resource-row:hover,
+.emberly-topic-tabs > button:hover,
+.emberly-topic-back:hover { background: var(--background-modifier-hover); }
+.emberly-resource-thumbnail {
+  position: relative;
+  display: flex;
+  flex: 0 0 88px;
+  width: 88px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+}
+.emberly-resource-thumbnail > svg { width: 24px; height: 24px; }
+.emberly-resource-thumbnail > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.emberly-resource-copy { display: block; flex: 1; min-width: 0; }
+.emberly-resource-title { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; font-size: 14px; line-height: 22px; color: var(--text-normal); }
+.emberly-resource-description { display: block; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 20px; color: var(--text-muted); }
+.emberly-resource-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.emberly-resource-tags > span { max-width: 100%; padding: 1px 6px; border-radius: 4px; background: var(--background-secondary); color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
+.emberly-resource-empty { padding: 32px 24px; text-align: center; color: var(--text-muted); font-size: 14px; }
+.emberly-resource-empty svg { width: 28px; height: 28px; }
+.emberly-topic-tabs > button:focus-visible,
+.emberly-topic-back:focus-visible,
+.emberly-resource-row:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: -3px; }
+.emberly-topic-pane.emberly-topic-details-visible {
+  --metadata-display-reading: block;
+  --metadata-display-editing: block;
+}
+.emberly-topic-pane:not(.emberly-topic-details-visible) .metadata-container:not(.mod-error) {
+  display: none !important;
+}
+.emberly-topic-pane.emberly-topic-details-visible .markdown-source-view.is-live-preview .metadata-container,
+.emberly-topic-pane.emberly-topic-details-visible .markdown-preview-view .metadata-container,
+.emberly-topic-pane .metadata-container.mod-error {
+  display: block !important;
+}
+.emberly-topic-pane.emberly-topic-has-heading .inline-title {
+  display: none !important;
+}
+.emberly-topic-pane .emberly-topic-details-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  min-height: 28px;
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  border-radius: var(--radius-s);
+  white-space: nowrap;
+}
+.emberly-topic-pane .emberly-topic-details-toggle svg {
+  width: 15px;
+  height: 15px;
+}
+.emberly-topic-pane .emberly-topic-details-toggle[aria-expanded="true"] {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+.emberly-topic-pane .emberly-topic-details-toggle:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}
+
+/* ResourceView's original 50px bar, 264px cover, 56px floating action and
+   16px content spacing. Keep the native editor mounted and independently
+   scrollable; a short pane must never lose its editing area to the cover. */
+.emberly-topic-pane.emberly-resource-pane { --file-margins: 16px; --file-margins-x: 16px; --file-margins-y: 16px; }
+.emberly-resource-pane .emberly-topic-chrome {
+  max-height: 65%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.emberly-resource-header { font-size: 14px; line-height: 1.5; }
+.emberly-resource-header button {
+  height: auto;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+.emberly-resource-header button:hover { background: var(--background-modifier-hover); }
+.emberly-resource-header button:disabled { opacity: .5; cursor: default; }
+.emberly-resource-header button:focus-visible,
+.emberly-resource-header a:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+.emberly-resource-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  align-items: center;
+  min-height: 50px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+}
+.emberly-resource-bar-title { font-size: 16px; font-weight: 600; text-align: center; }
+.emberly-resource-bar > button { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; }
+.emberly-resource-bar svg { width: 20px; height: 20px; }
+.emberly-resource-hero { position: relative; height: 264px; max-height: 35vh; background: var(--background-secondary); }
+.emberly-resource-cover { display: block; width: 100%; height: 100%; object-fit: cover; }
+.emberly-resource-open {
+  position: absolute;
+  right: 16px;
+  bottom: -28px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #FFCF54;
+  color: #594300;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, .16);
+  text-decoration: none;
+  cursor: pointer;
+}
+.emberly-resource-open svg { width: 24px; height: 24px; }
+.emberly-resource-open:hover { background: #FFC72C; color: #594300; }
+.emberly-resource-open[aria-disabled="true"] { background: var(--background-secondary); color: var(--text-faint); box-shadow: none; cursor: default; }
+.emberly-resource-header-copy { padding: 24px 16px 8px; }
+.emberly-resource-header .emberly-resource-header-title {
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+.emberly-resource-hero:not([hidden]) + .emberly-resource-header-copy .emberly-resource-header-title { padding-right: 68px; }
+.emberly-resource-header-source { margin-top: 4px; font-size: 12px; overflow-wrap: anywhere; }
+.emberly-resource-header-source a { display: inline-flex; align-items: center; gap: 4px; color: var(--text-muted); text-decoration: none; }
+.emberly-resource-header-source a:hover { color: var(--interactive-accent); }
+.emberly-resource-header-source svg { display: block; width: 14px; height: 14px; }
+.emberly-resource-header-description { margin: 8px 0 0; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.emberly-resource-header-warning { margin-top: 8px; font-size: 12px; color: var(--text-warning); overflow-wrap: anywhere; }
+.emberly-resource-rating { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 16px; }
+.emberly-resource-stars { display: flex; align-items: center; }
+.emberly-resource-stars > button { display: grid; place-items: center; width: 24px; height: 28px; border-radius: 4px; }
+.emberly-resource-stars svg { display: block; width: 22px; height: 22px; stroke: #99A7B7; fill: none; }
+.emberly-resource-stars .is-filled svg { stroke: #FFCF54; fill: #FFCF54; }
+.emberly-resource-header .emberly-resource-text-button { min-height: 28px; padding: 2px 4px; color: var(--text-muted); font-size: 12px; font-weight: 400; white-space: nowrap; }
+.emberly-resource-header-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0 12px 24px 16px; }
+.emberly-resource-tag-chips { display: contents; }
+.emberly-resource-tag-chip { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; min-height: 24px; padding: 2px 8px; border-radius: 4px; background: var(--background-secondary); font-size: 12px; }
+.emberly-resource-tag-chip > span { min-width: 0; overflow-wrap: anywhere; }
+.emberly-resource-tag-chip > button { display: grid; flex: 0 0 20px; place-items: center; width: 20px; height: 20px; border-radius: 4px; }
+.emberly-resource-tag-chip svg { width: 12px; height: 12px; }
+.emberly-resource-tag-form { display: flex; gap: 8px; align-items: center; padding: 0 16px 16px; }
+.emberly-resource-tag-form input { flex: 1; width: 100%; min-width: 0; font: inherit; }
+.emberly-resource-tag-form > button { padding: 6px 12px; border-radius: 4px; background: var(--background-secondary); }
+.emberly-resource-header-status { padding: 0 16px 12px; color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
+.emberly-resource-header-status:empty { display: none; }
+
+@media (max-width: 800px) {
+  .emberly-map-view .emberly-canvas { padding: 0; display: block; grid-template-columns: none; }
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-ext-400-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url("../../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-ext-600-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url("../../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-600-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}

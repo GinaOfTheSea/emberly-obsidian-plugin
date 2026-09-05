@@ -1,0 +1,22 @@
+name: Bug report
+description: Report an Emberly Maps problem.
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include what you expected and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions and operating system
+      placeholder: Emberly Maps version, Obsidian version, installer version, OS
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or errors
+      description: Include a minimal example when possible. Remove personal vault contents from anything you share.

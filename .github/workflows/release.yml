@@ -1,0 +1,51 @@
+name: Draft Obsidian release
+
+on:
+  push:
+    tags: ['*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+  draft:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+      - name: Require the exact manifest version as the tag
+        run: node scripts/release/release-metadata.mjs
+      - uses: actions/download-artifact@v4
+        with:
+          name: plugin-${{ github.sha }}
+          path: dist/
+      - name: Check verified artifacts
+        run: |
+          cd "dist/$RELEASE_TAG"
+          sha256sum --check SHA256SUMS.txt
+      - name: Create a draft with individual Obsidian assets
+        run: |
+          gh release create "$RELEASE_TAG" --verify-tag --draft \
+            --repo "$GITHUB_REPOSITORY" --title "$RELEASE_TAG" \
+            --notes-file "docs/releases/$RELEASE_TAG.md" \
+            "dist/$RELEASE_TAG/main.js" \
+            "dist/$RELEASE_TAG/manifest.json" \
+            "dist/$RELEASE_TAG/styles.css" \
+            "dist/$RELEASE_TAG/LICENSE" \
+            "dist/$RELEASE_TAG/THIRD_PARTY_NOTICES.md" \
+            "dist/$RELEASE_TAG/SHA256SUMS.txt"
