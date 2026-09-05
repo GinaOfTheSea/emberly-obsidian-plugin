@@ -11,7 +11,7 @@ created by `node scripts/dev/create-resource-test-vault.mjs`; never use a person
 - Start Obsidian with the developer console open. Enable the plugin and confirm no
   load-time errors.
 - Open a `.emberly.md` map from File explorer. Confirm it opens in integrated map
-  mode, and **Return to plain note** restores the untouched native editor.
+  mode, and the **Return to plain note** command restores the untouched native editor.
 - Open the same map through the ribbon/command picker and in separate panes.
 
 ## Map and topic operations

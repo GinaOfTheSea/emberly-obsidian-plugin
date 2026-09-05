@@ -280,7 +280,7 @@ describe("integrated native pane (DOM and public API adapter, not live Obsidian)
     await state.plugin.openMap(state.map); await frame();
     const leaf = state.leaves[0]!, view = leaf.view as MarkdownView;
     const editor = view.contentEl.querySelector(".markdown-source-view");
-    view.contentEl.querySelector<HTMLButtonElement>('[aria-label="Return to plain note"]')!.click();
+    state.plugin.closeIntegratedMap(leaf);
     state.plugin.closeIntegratedMap(leaf);
     expect(view.contentEl.children).toHaveLength(1);
     expect(editor?.parentElement).toBe(view.contentEl);

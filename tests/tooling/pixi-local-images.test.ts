@@ -13,6 +13,8 @@ describe("Pixi local image bundle", () => {
     expect(original.match(/\bfetch\s*\(/g)).toHaveLength(2);
     const adapted = (await build({ ...options, plugins: [pixiLocalImages()] })).outputFiles![0]!.text;
     expect(adapted).not.toMatch(/\bfetch\s*\(|XMLHttpRequest/);
+    expect(original.match(/\bnew\s+Function\s*\(/g)).toHaveLength(3);
+    expect(adapted).not.toMatch(/\bnew\s+Function\s*\(|\beval\s*\(/);
     expect(adapted).toContain("Pixi network loading is disabled");
   });
 

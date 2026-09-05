@@ -2,6 +2,8 @@ import esbuild from "esbuild";
 import { builtinModules } from "node:module";
 import path from "node:path";
 import { pixiLocalImages } from "./scripts/build/pixi-local-images.mjs";
+import { assertNoDynamicCode } from "./scripts/build/pixi-static-uniforms.mjs";
+import { readFile } from "node:fs/promises";
 
 const production = process.argv[2] === "production";
 const pluginContext = await esbuild.context({
@@ -33,6 +35,7 @@ const stylesContext = await esbuild.context({
 if (production) {
   await Promise.all([pluginContext.rebuild(), stylesContext.rebuild()]);
   await Promise.all([pluginContext.dispose(), stylesContext.dispose()]);
+  assertNoDynamicCode(await readFile("main.js", "utf8"));
 } else {
   await Promise.all([pluginContext.watch(), stylesContext.watch()]);
 }

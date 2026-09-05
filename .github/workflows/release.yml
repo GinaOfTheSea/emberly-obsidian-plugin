@@ -66,8 +66,9 @@ jobs:
           done
       - name: Create a draft with individual Obsidian assets
         run: |
+          release_title="$(head -n 1 "docs/releases/$RELEASE_TAG.md")"
           gh release create "$RELEASE_TAG" --verify-tag --draft \
-            --repo "$GITHUB_REPOSITORY" --title "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" --title "${release_title#\# }" \
             --notes-file "docs/releases/$RELEASE_TAG.md" \
             "dist/$RELEASE_TAG/main.js" \
             "dist/$RELEASE_TAG/manifest.json" \

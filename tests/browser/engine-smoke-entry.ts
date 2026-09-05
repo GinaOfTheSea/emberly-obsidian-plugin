@@ -1,13 +1,13 @@
 import { EmberlyEngineHost } from "../../src/emberly-engine/engine-host";
 import type { EmberlyMap, EmberlyNode } from "../../src/shared/types";
-import { BaseTexture, ImageResource, Renderer, Texture } from "@pixi/core";
+import { BaseTexture, ImageResource, Renderer, Texture, Shader, UniformGroup } from "@pixi/core";
 import { Container } from "@pixi/display";
 import { Sprite } from "@pixi/sprite";
 import { CanvasRenderer } from "@pixi/canvas-renderer";
 import { ALPHA_MODES, SCALE_MODES } from "@pixi/constants";
 import { settings } from "@pixi/settings";
 
-const imageHarness = { BaseTexture, ImageResource, Renderer, Texture, Container, Sprite, CanvasRenderer, ALPHA_MODES, SCALE_MODES, settings };
+const imageHarness = { BaseTexture, ImageResource, Renderer, Texture, Shader, UniformGroup, Container, Sprite, CanvasRenderer, ALPHA_MODES, SCALE_MODES, settings };
 declare global { interface Window { emberlyImages: typeof imageHarness; } }
 window.emberlyImages = imageHarness;
 
@@ -26,7 +26,7 @@ declare global { interface Window { emberlyHarness: {
   migrate(container?: HTMLElement): void;
   mount: HTMLElement;
   events: { focus: string[]; edit: string[]; writes: number };
-  create(container: HTMLElement): EmberlyEngineHost;
+  create(container: HTMLElement, mapOverride?: EmberlyMap): EmberlyEngineHost;
 }; } }
 
 const node = (id: string, parentId: string | null, side: "left" | "right" | "center", order: number): EmberlyNode => ({
@@ -69,9 +69,9 @@ try {
     engine, mount, events,
     tree: (engine as unknown as { tree: HarnessTree }).tree,
     migrate: (element = mount) => { migrations.get(element)?.(element.ownerDocument.defaultView!); },
-    create: (container) => {
+    create: (container, mapOverride = map) => {
       prepare(container);
-      return new EmberlyEngineHost(container, map, { persist: () => undefined, focus: () => undefined, edit: () => undefined });
+      return new EmberlyEngineHost(container, mapOverride, { persist: () => undefined, focus: () => undefined, edit: () => undefined });
     },
   };
 } catch (error) {

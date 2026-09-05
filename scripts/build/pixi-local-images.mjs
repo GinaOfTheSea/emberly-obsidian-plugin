@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { adaptPixiUniforms } from "./pixi-static-uniforms.mjs";
 
 // Pixi 6.5.1 includes two fetch paths even when its optional bitmap mode is off.
 // Keep this adaptation in the build (including browser tests), rather than
@@ -31,7 +32,7 @@ export function adaptPixiImages(source, moduleName) {
   return contents;
 }
 
-export function pixiLocalImages() {
+export function pixiLocalImages({ staticUniforms = true } = {}) {
   return {
     name: "pixi-local-images",
     setup(build) {
@@ -41,7 +42,9 @@ export function pixiLocalImages() {
         if (manifest.version !== "6.5.1") {
           throw new Error(`Review the Pixi local-image adaptation for ${manifest.name}@${manifest.version}.`);
         }
-        return { contents: adaptPixiImages(await readFile(file, "utf8"), moduleName), loader: "js" };
+        let contents = adaptPixiImages(await readFile(file, "utf8"), moduleName);
+        if (moduleName === "core" && staticUniforms) contents = adaptPixiUniforms(contents);
+        return { contents, loader: "js" };
       });
     },
   };

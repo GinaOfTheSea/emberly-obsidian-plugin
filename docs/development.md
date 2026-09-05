@@ -173,6 +173,43 @@ panning, dragging, double-clicking, window migration, WebGL restoration, and
 cleanup. It supplies an adapter for Obsidian's window-migration callback; it does
 not run inside Obsidian. Unit and DOM tests likewise use adapters for the app.
 
+## Pixi uniform uploads
+
+The review of release `0.1.1` (`2254a4e`, 2026-09-05) found three
+`new Function` call sites in bundled Pixi 6.5.1: a capability check, ordinary
+uniform synchronization, and uniform-buffer synchronization. No route from note
+content to generated JavaScript was identified. Removing these calls is hardening,
+not a fix for an established exploit.
+
+The build now replaces all three functions with static upload plans from
+`src/emberly-engine/static-uniforms.js`. Each shader gets a reusable list of
+ordinary JavaScript functions; changing values remain data. WebGL stays enabled,
+including when the browser blocks dynamic JavaScript compilation. Uniform buffers
+use Pixi's existing STD140 layout calculation, and nested texture groups share
+the original texture counter.
+
+The adaptation checks the Pixi version and hashes of the original functions.
+Dependency changes fail the build until reviewed. A separate production-bundle
+check rejects direct or property calls to `eval` and `Function`, and literal
+string timers. This is a regression guard for known patterns, not a security
+sandbox or a complete analysis of indirect execution.
+
+Custom Pixi code-generating uniform parsers are rejected. Automatically managed
+uniform buffers cover the float, vector, matrix and array cases exercised by the
+tests; unsupported single integer or boolean buffer fields throw explicitly.
+Review the adapter and extend its differential tests before adding shader features
+outside that coverage. The map currently uses ordinary uniform groups.
+
+The browser suite compares the static implementation with the original Pixi
+generators, checks identical pixels in both themes, asserts WebGL under a policy
+that blocks compilation, and exercises real WebGL2 uniform buffers and nested
+samplers. An optional benchmark covers 30, 300 and 1,000 nodes. See the
+[comparison results and reproduction steps](./qa/static-uniforms.md).
+
+Keep note content separate from shader source, uniform identifiers and executable
+templates when adding renderer features. Do not conceal the calls merely to clear
+the scanner recommendation.
+
 ## Check in Obsidian
 
 Run `npm run verify` before submitting a code change, and the browser suite when

@@ -1,6 +1,6 @@
 {
   "name": "emberly-maps",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Open Markdown notes as Emberly-style mind maps in Obsidian.",
   "license": "AGPL-3.0-only",
   "private": true,
@@ -21,7 +21,7 @@
     "lint": "eslint . && eslint -c config/eslint.legacy.config.mjs src/emberly-engine src/topics/fractions.js",
     "test": "vitest run --config config/vitest.config.ts",
     "verify": "npm run lint && npm test && npm run build",
-    "test:browser": "node scripts/build/build-engine-smoke.mjs && node tests/browser/run-engine-images.cjs && node tests/browser/run-engine-text.cjs && node tests/browser/run-engine-windows.cjs && node tests/browser/run-pane-styles.cjs && node tests/browser/run-topic-rename.cjs",
+    "test:browser": "node scripts/build/build-engine-smoke.mjs && node tests/browser/run-engine-images.cjs && node tests/browser/run-engine-text.cjs && node tests/browser/run-engine-windows.cjs && node tests/browser/run-pane-styles.cjs && node tests/browser/run-topic-rename.cjs && node tests/browser/run-static-uniforms.mjs",
     "release:check": "node scripts/release/release-metadata.mjs",
     "release:prepare": "npm run verify && npm run test:browser && node scripts/release/prepare-release.mjs",
     "version": "node scripts/release/version-bump.mjs && git add manifest.json versions.json"

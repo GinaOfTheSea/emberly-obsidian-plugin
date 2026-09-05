@@ -270,7 +270,6 @@ export class EmberlyMapSurface {
     const settings = actions.createDiv({ cls: "emberly-button-group", attr: { role: "group", "aria-label": "Map view controls" } });
     this.settingsButton = this.iconButton(settings, "emberly-map-settings", "Map settings", () => this.showMapSettings(this.displayedMap ?? map));
     this.settingsButton.disabled = map.issues.length > 0 || this.plugin.resourceMoveActive;
-    this.iconButton(settings, "refresh-cw", "Reload from Markdown", () => this.render());
     if (this.renderExtraActions) {
       const panels = actions.createDiv({ cls: "emberly-button-group", attr: { role: "group", "aria-label": "Notes panel controls" } });
       this.renderExtraActions(panels);

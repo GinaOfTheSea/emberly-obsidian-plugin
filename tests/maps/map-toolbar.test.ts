@@ -55,7 +55,6 @@ describe("Emberly-style map button groups (isolated DOM, not visual QA)", () => 
     expect(Array.from(group.querySelectorAll("button"), (button) => button.getAttribute("aria-label")))
       .toEqual(["Add sibling topic", "Add child topic", "Select a branch topic to collapse"]);
     expect(button("Map settings").closest(".emberly-toolbar-actions")).not.toBeNull();
-    expect(button("Reload from Markdown").closest(".emberly-toolbar-actions")).not.toBeNull();
     expect(group.contains(button("Choose map"))).toBe(false);
   });
   it("connects existing map/edit/viewport actions without recreating the canvas", async () => {
@@ -112,11 +111,11 @@ describe("Emberly-style map button groups (isolated DOM, not visual QA)", () => 
     map.nodes.pop(); surface.setReferenceSelection({ sourceNodeId: "child", targetNodeIds: [] });
     expect(button("Add sibling topic").disabled).toBe(true);
   });
-  it("retains invalid-map guards and reload remains available", async () => {
+  it("retains invalid-map guards and recovers when refreshed after a repair", async () => {
     map.issues = ["Missing parent"]; await start();
     expect(button("Add child topic").disabled).toBe(true); expect(button("Map settings").disabled).toBe(true);
     expect(state.engines).toHaveLength(0);
-    map.issues = []; button("Reload from Markdown").click();
+    map.issues = []; surface.refresh();
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     expect(state.engines).toHaveLength(1);
   });

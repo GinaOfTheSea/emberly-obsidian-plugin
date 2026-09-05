@@ -29,6 +29,12 @@ For the initial version, keep `0.1.0`. For subsequent versions, run `npm version
 the version commit/tag. Tags use `x.y.z` without `v`, matching Obsidian's requirement.
 Do not reuse published tags or change historical minimum-version mappings.
 
+Starting with `0.1.2 — Kittiwake`, give every release a seagull name. Keep the
+manifest version and Git tag numeric (`x.y.z`); put the name in the first line of
+`docs/releases/<version>.md`, using `# <version> — <seagull name>`. The release
+workflow uses that heading as the GitHub release title. Choose a different name
+for each release; leave previously published names and tags unchanged.
+
 Write `docs/releases/<version>.md` before tagging. If updating `minAppVersion`,
 verify that app version in a real disposable vault; do not lower it speculatively.
 The metadata check rejects mismatches among the manifest, package, lockfile,

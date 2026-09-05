@@ -33,9 +33,6 @@ export class IntegratedMapPane {
       this.toggleButton = actions.createEl("button", { attr: { type: "button" } });
       this.toggleButton.addEventListener("click", () => this.setCollapsed(!this.collapsed));
       this.updateToggle();
-      const exit = actions.createEl("button", { attr: { type: "button", "aria-label": "Return to plain note", title: "Return to plain note" } });
-      setIcon(exit, "panel-top-close");
-      exit.addEventListener("click", () => this.plugin.closeIntegratedMap(view.leaf));
     });
     this.divider.addEventListener("pointerdown", (event) => {
       if (event.button !== 0) return;
