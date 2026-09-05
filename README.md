@@ -10,6 +10,8 @@ leaving it out there for others to use and take inspiration from.
 Perhaps the Emberly mind map concept will have a more fitting life as an
 Obsidian plugin.
 
+![Emberly Maps in Obsidian, with a seagull knowledge tree and its notes panel.](./docs/images/emberly-demo.gif)
+
 ![A Seagulls knowledge tree in Obsidian, with four colored branches.](./docs/images/map-overview.png)
 
 ## A little about the idea
