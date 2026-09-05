@@ -448,7 +448,8 @@ export default class EmberlyMapsPlugin extends Plugin {
       (file, status, finish) => this.beginResourceMove(leaf, file, status, finish),
       { rename: (map, name) => this.renameMap(map, name), layout: (map, layout) => this.setMapLayout(map, layout),
         center: (map, change) => this.setMapCenter(map, change), icons: (map, key, visible) => this.setMapIcons(map, key, visible),
-        duplicate: (map) => this.duplicateMap(map), move: (map) => this.promptMoveMap(map), trash: (map) => this.trashMap(map) }));
+        duplicate: (map) => this.duplicateMap(map), move: (map) => this.promptMoveMap(map), trash: (map) => this.trashMap(map) },
+      (file, identity, name, expectedPath) => this.renameTopic(file, identity, name, expectedPath)));
     }
     this.syncOpenInMapActions(liveLeaves);
     this.syncReferenceViews();
@@ -513,6 +514,24 @@ export default class EmberlyMapsPlugin extends Plugin {
         return resourceProperties(properties, change);
       });
       return readResourceSettings(saved);
+    });
+  }
+
+  private async renameTopic(file: TFile, identity: TopicIdentity, name: string, expectedPath: string): Promise<void> {
+    await this.queueMapWrite(identity.mapId, async () => {
+      if (file.path !== expectedPath) throw new Error("This note was renamed or moved elsewhere. Cancel and try again.");
+      const map = this.index.maps().find((candidate) => candidate.id === identity.mapId);
+      const node = map?.nodes.find((candidate) => candidate.id === identity.id && candidate.path === file.path);
+      if (!map || map.format !== 2 || map.issues.length || !node?.parentId || this.index.file(file.path) !== file) {
+        throw new Error("This topic's map is missing or has hierarchy issues. Reload or repair the topic properties first.");
+      }
+      const properties = frontmatter(await this.app.vault.read(file)).properties;
+      if (properties.emberly !== "topic" || properties["emberly-format"] !== 2
+        || properties["emberly-id"] !== identity.id || properties["emberly-map"] !== identity.mapId) {
+        throw new Error("The topic identity changed while its name was being edited.");
+      }
+      if (file.path !== expectedPath) throw new Error("This note was renamed or moved elsewhere. Cancel and try again.");
+      await this.renameNote(file, name);
     });
   }
 

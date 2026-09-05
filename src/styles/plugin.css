@@ -187,10 +187,10 @@
 }
 .emberly-integrated-pane.emberly-resource-creating > .view-content > .emberly-topic-resource-panel { grid-row: 1 / 3; }
 .emberly-integrated-pane.emberly-resource-moving > .view-content > .emberly-topic-chrome { grid-row: 1 / 3; max-height: none; }
-.emberly-integrated-pane.emberly-resource-moving > .view-content > .markdown-source-view,
-.emberly-integrated-pane.emberly-resource-moving > .view-content > .markdown-reading-view { display: none !important; }
+.workspace-leaf-content.emberly-integrated-pane.emberly-resource-moving > .view-content > .markdown-source-view,
+.workspace-leaf-content.emberly-integrated-pane.emberly-resource-moving > .view-content > .markdown-reading-view { display: none; }
 .workspace-leaf-content.emberly-integrated-collapsed > .view-content { grid-template-columns: minmax(0, 1fr); }
-.emberly-integrated-collapsed > .view-content > :not(.emberly-integrated-map) { display: none !important; }
+.workspace-leaf-content.emberly-integrated-collapsed > .view-content > :not(.emberly-integrated-map) { display: none; }
 @container (max-width: 620px) {
   .workspace-leaf-content.emberly-integrated-pane > .view-content {
     grid-template-columns: minmax(0, 1fr);
@@ -245,11 +245,11 @@
   min-height: 0;
   height: auto;
 }
-.emberly-topic-pane.emberly-topic-show-resources > .view-content > .markdown-source-view,
-.emberly-topic-pane.emberly-map-show-settings > .view-content > .markdown-source-view,
-.emberly-topic-pane.emberly-map-show-settings > .view-content > .markdown-reading-view,
-.emberly-topic-pane.emberly-topic-show-resources > .view-content > .markdown-reading-view {
-  display: none !important;
+.workspace-leaf-content.emberly-topic-pane.emberly-topic-show-resources > .view-content > .markdown-source-view,
+.workspace-leaf-content.emberly-topic-pane.emberly-map-show-settings > .view-content > .markdown-source-view,
+.workspace-leaf-content.emberly-topic-pane.emberly-map-show-settings > .view-content > .markdown-reading-view,
+.workspace-leaf-content.emberly-topic-pane.emberly-topic-show-resources > .view-content > .markdown-reading-view {
+  display: none;
 }
 .emberly-topic-chrome,
 .emberly-map-settings-panel,
@@ -272,6 +272,15 @@
   text-align: center;
   overflow-wrap: anywhere;
 }
+
+.emberly-topic-header-title[role="button"] { cursor: text; }
+.emberly-topic-header .emberly-topic-header-title:focus-visible,
+.emberly-topic-header .emberly-topic-header-title.is-renaming {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-s);
+}
+.emberly-topic-header .emberly-topic-header-title.is-renaming { white-space: pre-wrap; }
 .emberly-topic-header-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 8px; }
 .emberly-topic-header-controls > button {
   display: inline-flex;
@@ -355,8 +364,7 @@
 .emberly-topic-rating-picker { display: flex; justify-content: center; gap: 4px; }
 .emberly-topic-rating-picker > button { display: grid; place-items: center; width: 36px; height: 36px; padding: 4px; background: transparent; box-shadow: none; border: 0; }
 .emberly-topic-rating-picker svg { width: 24px; height: 24px; stroke: var(--text-faint); }
-.emberly-topic-rating-picker .is-filled svg,
-.emberly-topic-rating-picker > button:hover svg { stroke: #FFCF54; fill: #FFCF54; }
+.emberly-topic-rating-picker .is-filled svg { stroke: #FFCF54; fill: #FFCF54; }
 .emberly-topic-header-popup .emberly-topic-plan-option {
   display: flex;
   align-items: center;
@@ -378,7 +386,7 @@
 .emberly-topic-header-popup input:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
 .emberly-topic-header-status { margin-top: 8px; font-size: 12px; text-align: center; color: var(--text-muted); overflow-wrap: anywhere; }
 .emberly-topic-header-status:empty { display: none; }
-.emberly-topic-pane.emberly-topic-with-header .inline-title { display: none !important; }
+.workspace-leaf-content.emberly-topic-pane.emberly-topic-with-header .inline-title { display: none; }
 .emberly-topic-pane .emberly-topic-chrome[hidden],
 .emberly-topic-pane .emberly-map-settings-panel[hidden],
 .emberly-topic-pane .emberly-topic-resource-panel[hidden] { display: none; }
@@ -602,16 +610,16 @@
   --metadata-display-reading: block;
   --metadata-display-editing: block;
 }
-.emberly-topic-pane:not(.emberly-topic-details-visible) .metadata-container:not(.mod-error) {
-  display: none !important;
+.workspace-leaf-content.emberly-topic-pane:not(.emberly-topic-details-visible) .metadata-container:not(.mod-error) {
+  display: none;
 }
-.emberly-topic-pane.emberly-topic-details-visible .markdown-source-view.is-live-preview .metadata-container,
-.emberly-topic-pane.emberly-topic-details-visible .markdown-preview-view .metadata-container,
-.emberly-topic-pane .metadata-container.mod-error {
-  display: block !important;
+.workspace-leaf-content.emberly-topic-pane.emberly-topic-details-visible .markdown-source-view.is-live-preview .metadata-container,
+.workspace-leaf-content.emberly-topic-pane.emberly-topic-details-visible .markdown-preview-view .metadata-container,
+.workspace-leaf-content.emberly-topic-pane .metadata-container.mod-error {
+  display: block;
 }
-.emberly-topic-pane.emberly-topic-has-heading .inline-title {
-  display: none !important;
+.workspace-leaf-content.emberly-topic-pane.emberly-topic-has-heading .inline-title {
+  display: none;
 }
 .emberly-topic-pane .emberly-topic-details-toggle {
   display: inline-flex;
@@ -734,8 +742,8 @@
 .emberly-resource-header-status { padding: 0 16px 12px; color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
 .emberly-resource-header-status:empty { display: none; }
 
-/* Hidden plugin controls must outrank their visible layout rules. Keep native
-   editor overrides separate: Obsidian also changes those with inline styles. */
+/* Hidden plugin controls must outrank their visible layout rules. Native editor
+   visibility is scoped to workspace leaves above, preserving its mode changes. */
 .emberly-topic-pane .emberly-topic-chrome [hidden],
 .emberly-topic-pane .emberly-map-settings-panel [hidden],
 .emberly-topic-pane .emberly-topic-resource-panel [hidden],

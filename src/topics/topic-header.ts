@@ -3,6 +3,7 @@ import { colorHex, readTopicAppearance, TOPIC_COLORS, type TopicAppearance, type
 
 type Control = "color" | "rating" | "plan";
 interface HeaderTopic extends TopicIdentity, TopicAppearance { file: TFile; title: string; }
+export type RenameTopic = (file: TFile, identity: TopicIdentity, name: string, expectedPath: string) => Promise<void>;
 
 /** Emberly's centered topic header around, not inside, the native editor. */
 export class TopicHeader {
@@ -15,6 +16,7 @@ export class TopicHeader {
   private active: Control | undefined;
   private generation = 0;
   private saving = false;
+  private editing: { path: string; title: string } | undefined;
   private popupDocument: Document | undefined;
   private popupObserver: ResizeObserver | undefined;
   private readonly dismiss = (event: Event): void => {
@@ -57,9 +59,25 @@ export class TopicHeader {
     parent: HTMLElement,
     private readonly save: (file: TFile, identity: TopicIdentity, change: TopicAppearanceChange) => Promise<TopicAppearance>,
     private readonly allowInherit: (file: TFile) => boolean,
+    private readonly rename?: RenameTopic,
   ) {
     this.container = parent.createDiv({ cls: "emberly-topic-header" });
     this.title = this.container.createEl("h2", { cls: "emberly-topic-header-title" });
+    if (rename) {
+      this.title.tabIndex = 0;
+      this.title.addEventListener("click", () => this.startRename());
+      this.title.addEventListener("keydown", (event) => {
+        if (this.editing) {
+          event.stopPropagation();
+          if (event.isComposing) return;
+          if (event.key === "Enter") { event.preventDefault(); void this.commitRename(true); }
+          else if (event.key === "Escape" && !this.saving) { event.preventDefault(); this.endRename(true); }
+        } else if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault(); event.stopPropagation(); this.startRename();
+        }
+      });
+      this.title.addEventListener("blur", () => { void this.commitRename(false); });
+    }
     const controls = this.container.createDiv({ cls: "emberly-topic-header-controls" });
     this.buttons = Object.fromEntries((["color", "rating", "plan"] as const).map((control) => {
       const button = controls.createEl("button", { attr: { type: "button", "aria-haspopup": "dialog", "aria-expanded": "false" } });
@@ -85,6 +103,8 @@ export class TopicHeader {
     const appearance = readTopicAppearance(properties);
     const changed = file !== this.topic?.file || properties["emberly-id"] !== this.topic?.id || properties["emberly-map"] !== this.topic?.mapId;
     if (changed || !valid) {
+      this.editing = undefined;
+      this.title.removeAttribute("aria-invalid");
       this.generation++; this.close(); this.saving = false; this.status.setText("");
     }
     if (this.active && this.topic && (appearance.color !== this.topic.color || appearance.rating !== this.topic.rating || appearance.state !== this.topic.state)) this.close();
@@ -100,7 +120,14 @@ export class TopicHeader {
   private render(): void {
     const topic = this.topic;
     if (!topic) return;
-    this.title.setText(topic.title);
+    if (!this.editing) this.title.setText(topic.title);
+    if (this.rename) {
+      this.title.setAttribute("role", this.editing ? "textbox" : "button");
+      this.title.setAttribute("aria-label", this.editing ? "Topic name" : `Rename ${topic.title}`);
+      this.title.setAttribute("contenteditable", this.editing && !this.saving ? "plaintext-only" : "false");
+      this.title.classList.toggle("is-renaming", Boolean(this.editing));
+      this.title.setAttribute("aria-disabled", String(this.saving));
+    }
     for (const control of ["color", "rating", "plan"] as const) {
       const button = this.buttons[control];
       button.empty(); button.disabled = this.saving;
@@ -122,6 +149,47 @@ export class TopicHeader {
         button.createSpan({ text: label }); button.setAttribute("aria-label", label);
       }
       setIcon(button.createSpan({ cls: "emberly-topic-header-chevron" }), "chevron-down");
+    }
+  }
+
+  private startRename(): void {
+    if (!this.rename || !this.topic || this.saving || this.editing) return;
+    this.close();
+    this.editing = { path: this.topic.file.path, title: this.topic.title };
+    this.status.setText(""); this.title.removeAttribute("aria-invalid"); this.render();
+    this.title.focus();
+    const doc = this.title.ownerDocument, selection = doc.getSelection();
+    const range = doc.createRange(); range.selectNodeContents(this.title);
+    selection?.removeAllRanges(); selection?.addRange(range);
+  }
+
+  private endRename(restoreFocus: boolean): void {
+    this.editing = undefined;
+    this.title.removeAttribute("aria-invalid"); this.status.setText(""); this.render();
+    if (restoreFocus) this.title.focus({ preventScroll: true });
+  }
+
+  private async commitRename(restoreFocus: boolean): Promise<void> {
+    const topic = this.topic, editing = this.editing;
+    if (!topic || !editing || !this.rename || this.saving) return;
+    const name = this.title.textContent ?? "";
+    if (name === editing.title) { this.endRename(restoreFocus); return; }
+    const generation = this.generation;
+    this.saving = true; this.status.setText("Renaming…"); this.render();
+    try {
+      await this.rename(topic.file, topic, name, editing.path);
+      if (generation === this.generation && this.topic) {
+        this.topic.title = topic.file.basename;
+        this.endRename(restoreFocus);
+      }
+    } catch (error) {
+      if (generation === this.generation) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.title.setAttribute("aria-invalid", "true");
+        this.status.setText(`Not renamed: ${message}`);
+      }
+    } finally {
+      if (generation === this.generation) { this.saving = false; this.render(); }
     }
   }
 
@@ -178,10 +246,17 @@ export class TopicHeader {
 
   private renderRating(): void {
     const rating = this.popup.createDiv({ cls: "emberly-topic-rating-picker", attr: { role: "group", "aria-label": "Rating out of five" } });
+    const buttons: HTMLButtonElement[] = [];
+    const preview = (value: number): void => {
+      buttons.forEach((button, index) => button.classList.toggle("is-filled", index < value));
+    };
+    rating.addEventListener("pointerleave", () => preview(this.topic!.rating));
     for (let value = 1; value <= 5; value++) {
       const button = rating.createEl("button", { attr: { type: "button", "aria-label": `${value} out of 5`, "aria-pressed": String(this.topic!.rating === value) } });
+      buttons.push(button);
       button.classList.toggle("is-filled", value <= this.topic!.rating);
       setIcon(button, "circle");
+      button.addEventListener("pointerenter", () => preview(value));
       button.addEventListener("click", () => void this.commit({ rating: this.topic!.rating === value ? 0 : value }));
     }
     this.popup.createEl("button", { cls: "emberly-topic-popup-action", text: "Clear rating", attr: { type: "button" } })
@@ -236,5 +311,5 @@ export class TopicHeader {
     if (restoreFocus && previous) this.buttons[previous].focus();
   }
 
-  dispose(): void { this.generation++; this.close(); this.container.remove(); }
+  dispose(): void { this.generation++; this.editing = undefined; this.close(); this.container.remove(); }
 }

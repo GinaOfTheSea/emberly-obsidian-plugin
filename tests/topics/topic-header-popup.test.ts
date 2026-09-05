@@ -68,6 +68,25 @@ describe("topic settings floating outside the scrollable header", () => {
     expect(save).toHaveBeenLastCalledWith(file, expect.anything(), { color: 0x123abc });
   });
 
+  it("previews the whole hovered rating and restores the saved dots on leaving", () => {
+    header.update(file, { ...properties, "emberly-rating": 4 });
+    header.container.querySelector<HTMLButtonElement>('[aria-label="Change rating, 4 out of 5"]')!.click();
+    const picker = popup()!.querySelector<HTMLElement>(".emberly-topic-rating-picker")!;
+    const buttons = Array.from(picker.querySelectorAll("button"));
+    const filled = () => buttons.map((button) => button.classList.contains("is-filled"));
+    expect(filled()).toEqual([true, true, true, true, false]);
+    buttons[2]!.dispatchEvent(new PointerEvent("pointerenter"));
+    expect(filled()).toEqual([true, true, true, false, false]);
+    buttons[4]!.dispatchEvent(new PointerEvent("pointerenter"));
+    expect(filled()).toEqual([true, true, true, true, true]);
+    buttons[0]!.dispatchEvent(new PointerEvent("pointerenter"));
+    expect(filled()).toEqual([true, false, false, false, false]);
+    picker.dispatchEvent(new PointerEvent("pointerleave"));
+    expect(filled()).toEqual([true, true, true, true, false]);
+    expect(buttons.map((button) => button.getAttribute("aria-pressed"))).toEqual(["false", "false", "false", "true", "false"]);
+    expect(save).not.toHaveBeenCalled();
+  });
+
   it("Escape removes the popup and restores focus to its button", () => {
     const button = trigger("plan"), menu = open("plan");
     menu.querySelector("button")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));

@@ -30,7 +30,7 @@ declare global { interface Window { emberlyHarness: {
 }; } }
 
 const node = (id: string, parentId: string | null, side: "left" | "right" | "center", order: number): EmberlyNode => ({
-  id, parentId, side, order, path: `${id}.md`, title: id === "root" ? "Root" : `Topic ${id}`,
+  id, parentId, side, order, path: `${id}.md`, title: id === "root" ? "Root" : `Topic ${id} ${id === "left" ? "🐦" : id === "right" ? "👨‍👩‍👧‍👦" : "🇳🇴👍🏽"}`,
   mapId: "smoke-map", color: -1, collapsed: false, rating: 0, state: 0,
 });
 const map: EmberlyMap = {

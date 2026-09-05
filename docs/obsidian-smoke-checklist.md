@@ -18,6 +18,8 @@ created by `node scripts/dev/create-resource-test-vault.mjs`; never use a person
 
 - Create a map, then add several child and sibling topics in one batch. Confirm
   names, selection, zoom and viewport survive reload.
+- Rename a topic by clicking its title above the notes pane. Check Enter and
+  click-away to save, Escape to cancel, and retry after a filename collision.
 - Rename a topic in the map and through File explorer. Move a branch and reorder
   siblings. Confirm IDs stay unchanged and native Graph shows parent edges.
 - Rename and move the whole map folder. Reopen it from File explorer and confirm

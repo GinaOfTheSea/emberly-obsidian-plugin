@@ -9,6 +9,17 @@ const path = require("node:path");
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.setContent('<main class="emberly-topic-pane"><div class="emberly-topic-chrome"><div class="emberly-resource-header"></div></div></main>');
+    // Use installed Obsidian CSS for local verification when available. The
+    // small fallback models its public mode/property classes for portable CI.
+    if (process.env.OBSIDIAN_APP_CSS) await page.addStyleTag({ path: process.env.OBSIDIAN_APP_CSS });
+    else await page.addStyleTag({ content: `
+      .markdown-reading-view { display: flex; }
+      .markdown-source-view .metadata-container, .markdown-preview-view .metadata-container:not(.mod-error) { display: none; }
+      .markdown-source-view.is-live-preview.show-properties .metadata-container:not(.mod-error) { display: var(--metadata-display-editing, block); }
+      .markdown-preview-view.show-properties .metadata-container { display: var(--metadata-display-reading, block); }
+      .markdown-source-view.is-live-preview.show-properties .metadata-container[data-property-count="0"]:not(.mod-error),
+      .markdown-preview-view.show-properties .metadata-container[data-property-count="0"]:not(.mod-error) { display: none; }
+    ` });
     await page.addStyleTag({ path: path.resolve(__dirname, "../../styles.css") });
     // Compare flat flex children against the previous display:contents layout,
     // including wrapping and the edit buttons, at narrow and wide pane sizes.
@@ -73,7 +84,52 @@ const path = require("node:path");
       return { hiddenControls, pickerVisible, creation, moving, restored };
     });
     for (const [name, passed] of Object.entries(visibility)) assert.equal(passed, true, name);
+    const nativeStates = await page.evaluate(() => {
+      document.body.classList.add("show-inline-title");
+      const pane = document.querySelector("main");
+      pane.className = "workspace-leaf-content emberly-topic-pane emberly-integrated-pane";
+      pane.innerHTML = `<div class="view-content"><div class="emberly-integrated-map">Map</div>
+        <div class="markdown-source-view is-live-preview show-properties"><div class="inline-title">Title</div><div class="metadata-container" data-property-count="0">Properties</div></div>
+        <div class="markdown-reading-view"><div class="markdown-preview-view show-properties"><div class="inline-title">Title</div><div class="metadata-container" data-property-count="0">Properties</div></div></div></div>`;
+      const source = pane.querySelector(".markdown-source-view"), reading = pane.querySelector(".markdown-reading-view");
+      const visible = (el) => getComputedStyle(el).display !== "none";
+      const checks = {};
+      for (const mode of ["source", "reading"]) {
+        // Obsidian's hide() sets display:none; show() removes that override.
+        source.style.display = mode === "source" ? "" : "none";
+        reading.style.display = mode === "reading" ? "" : "none";
+        for (const state of ["notes", "resources", "settings", "moving", "collapsed"]) {
+          pane.className = "workspace-leaf-content emberly-topic-pane emberly-integrated-pane";
+          const stateClass = { resources: "emberly-topic-show-resources", settings: "emberly-map-show-settings", moving: "emberly-resource-moving", collapsed: "emberly-integrated-collapsed" }[state];
+          if (stateClass) pane.classList.add(stateClass);
+          checks[`${mode}/${state}`] = visible(source) === (state === "notes" && mode === "source")
+            && visible(reading) === (state === "notes" && mode === "reading")
+            && visible(pane.querySelector(".emberly-integrated-map"));
+        }
+      }
+      pane.className = "workspace-leaf-content emberly-topic-pane";
+      source.style.display = reading.style.display = "";
+      const metadata = [...pane.querySelectorAll(".metadata-container")];
+      for (const count of ["0", "2"]) {
+        metadata.forEach((el) => el.dataset.propertyCount = count);
+        for (const details of [false, true]) {
+          pane.classList.toggle("emberly-topic-details-visible", details);
+          checks[`properties/${count}/${details}`] = metadata.every((el) => visible(el) === details);
+        }
+      }
+      source.classList.remove("is-live-preview");
+      checks.rawSource = !visible(source.querySelector(".metadata-container"));
+      pane.classList.remove("emberly-topic-details-visible");
+      metadata.forEach((el) => el.classList.add("mod-error"));
+      checks.propertyErrors = metadata.every(visible);
+      pane.classList.add("emberly-topic-with-header");
+      checks.duplicateTitles = [...pane.querySelectorAll(".inline-title")].every((el) => !visible(el));
+      pane.classList.remove("emberly-topic-with-header");
+      checks.titlesRestored = [...pane.querySelectorAll(".inline-title")].every(visible);
+      return checks;
+    });
+    for (const [state, passed] of Object.entries(nativeStates)) assert.equal(passed, true, `Native ${state}`);
     assert.deepEqual(errors, []);
-    console.log("PASS: 18 tag layouts match the previous layout; hidden controls, resource creation/moving and restoration behave correctly");
+    console.log("PASS: 18 tag layouts match; controls, native modes, collapsed inspector, properties/errors and titles behave correctly");
   } finally { await browser.close(); }
 })().catch((error) => { console.error(error); process.exitCode = 1; });

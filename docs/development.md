@@ -133,6 +133,12 @@ stops if the patched source or Pixi version changes, so dependency upgrades need
 an explicit review of these two adaptations. Browser tests use the same build
 plugin and check image pixels with network access blocked.
 
+Map labels use `emoji-regex-xs` for joined emoji, flags, and skin-tone sequences.
+Its Unicode support follows the JavaScript runtime. Keep the emoji label tests
+and browser rendering checks when updating it. Pane visibility uses scoped CSS
+selectors and Obsidian's metadata variables; native mode transitions keep control
+of the editor's own inline display state.
+
 Use the commands that cover the code you changed:
 
 | Command | Checks |

@@ -34,12 +34,4 @@ export default defineConfig(
       "obsidianmd/ui/sentence-case": "off",
     },
   },
-  {
-    files: ["package.json"],
-    rules: {
-      // The legacy Pixi text atlas needs full emoji-sequence matching; the
-      // platform Unicode properties do not cover joined emoji equivalently.
-      "depend/ban-dependencies": ["error", { allowed: ["emoji-regex"] }],
-    },
-  },
 );

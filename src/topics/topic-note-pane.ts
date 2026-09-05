@@ -1,7 +1,7 @@
 import { Notice, setIcon, type MarkdownView, type TFile } from "obsidian";
 import type { EmberlyVaultIndex } from "../vault/vault-index";
 import type { TopicResource } from "../resources/resource-list";
-import { TopicHeader } from "./topic-header";
+import { TopicHeader, type RenameTopic } from "./topic-header";
 import type { TopicAppearance, TopicAppearanceChange, TopicIdentity } from "./topic-appearance";
 import { ResourceHeader } from "../resources/resource-header";
 import { resourceIdentity, type ResourceChange, type ResourceIdentity, type ResourceSettings } from "../resources/resource-properties";
@@ -66,6 +66,7 @@ export class TopicNotePane {
     createResources: (target: ResourceTarget, draft: ResourceDraft) => Promise<ResourceCreateResult>,
     private readonly beginMove: (file: TFile, status: (busy: boolean, message: string) => void, finish: () => void) => ResourceMoveSession,
     mapSettings: MapSettingsActions,
+    renameTopic?: RenameTopic,
   ) {
     view.containerEl.addClass("emberly-topic-pane");
     this.chrome = view.contentEl.createDiv({ cls: "emberly-topic-chrome" });
@@ -78,7 +79,7 @@ export class TopicNotePane {
       const map = this.index.mapContaining(file.path);
       const node = map?.nodes.find((candidate) => candidate.path === file.path);
       return Boolean(map && !map.issues.length && node?.parentId && map.nodes.some((parent) => parent.id === node.parentId && parent.parentId));
-    });
+    }, renameTopic);
     this.resourceHeader = new ResourceHeader(this.chrome, this.view.app, this.index, saveResource,
       (file) => this.navigate(file.path, { section: "resources" }),
       async (file) => { await this.view.app.workspace.getLeaf("tab").openFile(file); },

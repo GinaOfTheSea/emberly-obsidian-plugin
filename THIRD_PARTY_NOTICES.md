@@ -1,5 +1,11 @@
 # Third-party notices
 
+## emoji-regex-xs
+
+Emoji matching uses emoji-regex-xs 2.0.1, copyright (c) 2025 Steven Levithan,
+under the MIT License. Its complete license notice is included in the generated
+`main.js` bundle and alongside the import in `DynamicText.js`.
+
 ## Legacy toolbar icons
 
 Child and sibling geometry is copied from Emberly's NewChildIcon.jsx and

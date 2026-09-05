@@ -31,6 +31,7 @@ type PrivateAPI = {
   createMap(name: string): Promise<EmberlyMap>;
   createTopic(map: EmberlyMap, name: string, parent: string): Promise<TFile>;
   renameNote(file: TFile, name: string): Promise<void>;
+  renameTopic(file: TFile, identity: { id: string; mapId: string }, name: string, expectedPath: string): Promise<void>;
   updateProperties(file: TFile, update: Record<string, unknown>, root?: boolean): Promise<Record<string, unknown>>;
 };
 
@@ -210,6 +211,24 @@ describe("filename authority and lean writes through public vault APIs", () => {
     fixture.index.remove(map.path);
     await expect(plugin.renameMap(map, "Gone")).rejects.toThrow("missing");
     expect(fixture.files.get("Occupied")).toBeDefined();
+  });
+
+  it("renames from the topic header through FileManager and rejects collisions, invalid names and stale edits", async () => {
+    const file = fixture.index.file("a/Topics/one.md")!;
+    const original = await fixture.read(file.path);
+    const identity = { id: "a-one", mapId: "a" };
+    const rename = vi.spyOn(fixture.app.fileManager, "renameFile");
+    await expect(api.renameTopic(file, identity, "two", file.path)).rejects.toThrow("already");
+    await expect(api.renameTopic(file, identity, "../bad", file.path)).rejects.toThrow("valid");
+    await expect(api.renameTopic(file, identity, "", file.path)).rejects.toThrow("valid");
+    await expect(api.renameTopic(file, { ...identity, id: "wrong" }, "Bad", file.path)).rejects.toThrow("missing");
+    await api.renameTopic(file, identity, "Common Gull", file.path);
+    expect(rename).toHaveBeenCalledOnce();
+    expect(await fixture.read(file.path)).toBe(original);
+    expect(fixture.index.maps().find((map) => map.id === "a")!.nodes.find((node) => node.id === "a-one"))
+      .toMatchObject({ title: "Common Gull", path: "a/Topics/Common Gull.md" });
+    await expect(api.renameTopic(file, identity, "Stale", "a/Topics/one.md")).rejects.toThrow("elsewhere");
+    expect(rename).toHaveBeenCalledOnce();
   });
 
   it("renames in-map edits through FileManager without overwriting or synchronizing note headings", async () => {

@@ -1,6 +1,28 @@
 import DynamicChar from "./DynamicChar";
 import DynamicAtlas from "./DynamicAtlas";
-import emojiRegex from "emoji-regex";
+import emojiRegex from "emoji-regex-xs";
+/*!
+ * emoji-regex-xs — MIT License
+ * Copyright (c) 2025 Steven Levithan
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 import { Sprite, Point, Container } from "../pixi";
 
 
@@ -209,18 +231,20 @@ export default class DynamicText extends Container { // TODO extend container
   processInputText() {
     let charIndex = 0;
     const regex = emojiRegex();
-    const inputArray = Array.from(this._inputText);
+    const inputArray = [];
     
     let match;
     let offset = 0;
    
     while ((match = regex.exec(this._inputText))) {
       const m = match[0];
-      const size = [ ...m ].length;
-      inputArray.splice(match.index - offset, size, m);
+      // Regex indices count UTF-16 units; atlas characters count code points.
+      // Slice before splitting so non-emoji astral characters keep their place.
+      inputArray.push(...Array.from(this._inputText.slice(offset, match.index)), m);
       KNOWN_EMOJIS.add(m);
-      offset += size + (m.length - size) - 1;
+      offset = match.index + m.length;
     }
+    inputArray.push(...Array.from(this._inputText.slice(offset)));
 
     for (let i = 0; i < inputArray.length; i++) {
       let c = inputArray[i];
