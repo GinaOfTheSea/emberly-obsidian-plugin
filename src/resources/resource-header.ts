@@ -101,7 +101,7 @@ export class ResourceHeader {
     this.clear = rating.createEl("button", { cls: "emberly-resource-text-button", text: "clear rating", attr: { type: "button" } });
     this.clear.addEventListener("click", () => void this.commit({ rating: 0 }));
     const tagRow = this.container.createDiv({ cls: "emberly-resource-header-tags" });
-    this.tags = tagRow.createDiv({ cls: "emberly-resource-tag-chips" });
+    this.tags = tagRow;
     this.tagToggle = tagRow.createEl("button", { cls: "emberly-resource-text-button", text: "add/remove tag", attr: { type: "button", "aria-expanded": "false" } });
     this.tagToggle.addEventListener("click", () => this.toggleTags());
     this.tagForm = this.container.createEl("form", { cls: "emberly-resource-tag-form", attr: { "aria-label": "Add resource tag" } });
@@ -194,9 +194,12 @@ export class ResourceHeader {
     this.tagToggle.disabled = this.saving; this.tagInput.disabled = this.saving; this.tagAdd.disabled = this.saving;
     const signature = JSON.stringify([this.resource.tags, this.tagForm.hidden, this.saving]);
     if (signature === this.tagSignature) return;
-    this.tagSignature = signature; this.tags.empty();
+    this.tagSignature = signature;
+    // Keep the toggle mounted (and focused) while replacing only the chips.
+    for (const chip of Array.from(this.tags.querySelectorAll<HTMLElement>(":scope > .emberly-resource-tag-chip"))) chip.remove();
     for (const tag of this.resource.tags) {
       const chip = this.tags.createSpan({ cls: "emberly-resource-tag-chip" });
+      this.tags.insertBefore(chip, this.tagToggle);
       chip.createSpan({ text: tag });
       if (!this.tagForm.hidden) {
         const remove = this.iconButton(chip, "x", `Remove tag ${tag}`);

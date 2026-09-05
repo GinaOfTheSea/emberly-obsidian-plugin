@@ -21,7 +21,7 @@
     "lint": "eslint . && eslint -c config/eslint.legacy.config.mjs src/emberly-engine src/topics/fractions.js",
     "test": "vitest run --config config/vitest.config.ts",
     "verify": "npm run lint && npm test && npm run build",
-    "test:browser": "node scripts/build/build-engine-smoke.mjs && node tests/browser/run-engine-text.cjs && node tests/browser/run-engine-windows.cjs",
+    "test:browser": "node scripts/build/build-engine-smoke.mjs && node tests/browser/run-engine-images.cjs && node tests/browser/run-engine-text.cjs && node tests/browser/run-engine-windows.cjs && node tests/browser/run-pane-styles.cjs",
     "release:check": "node scripts/release/release-metadata.mjs",
     "release:prepare": "npm run verify && npm run test:browser && node scripts/release/prepare-release.mjs",
     "version": "node scripts/release/version-bump.mjs && git add manifest.json versions.json"

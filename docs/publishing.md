@@ -7,7 +7,7 @@ and [developer policies](https://docs.obsidian.md/community-directory/developer-
 ## Repository and release files
 
 The repository is `GinaOfTheSea/emberly-obsidian-plugin`. Its current default branch
-is `codex/integrated-native-map`. Git is already initialized; do not create another
+is `main`. Git is already initialized; do not create another
 repository inside the project. Keep the root manifest on the default branch up to
 date because the Community directory reads that version.
 
@@ -57,12 +57,48 @@ or update itself; these are development/release commands only.
 3. For the initial version, create the tag with `git tag -a 0.1.0 -m "Release 0.1.0"`.
    For later versions, `npm version` already creates the tag. Push that exact tag,
    for example `git push origin 0.1.0`.
-4. The release workflow reruns verification and browser checks and creates a
+4. The release workflow reruns verification and browser checks, generates and verifies
+   artifact attestations for all six release files, and creates a
    **draft** containing `main.js`, `manifest.json` and `styles.css` as individual
    attachments. A ZIP alone is insufficient. License/checksum attachments are additional.
 5. Review the draft and confirm public repository visibility before publishing.
    The workflow deliberately does not publish it automatically. An existing release
    causes creation to fail rather than silently replacing its files.
+
+## Release artifact attestations
+
+The tag-triggered release workflow signs the exact files from its successful CI
+build after checking their SHA-256 checksums: `main.js`, `manifest.json`,
+`styles.css`, `LICENSE`, `THIRD_PARTY_NOTICES.md` and `SHA256SUMS.txt`.
+GitHub records their digests together with the source commit, tag and workflow
+identity as [build provenance attestations](https://docs.github.com/en/actions/concepts/security/artifact-attestations).
+The workflow verifies every file against the generated attestation before creating
+the draft; signing or verification failure prevents draft creation.
+
+Signing uses GitHub's short-lived workflow identity, so no manually managed signing
+key or additional repository secret is needed. Only the release draft job receives
+`id-token: write` and `attestations: write`; ordinary branch and pull-request CI
+keeps its read-only permissions. The attestation action is pinned to a release
+commit. GitHub stores the attestations and links them in the workflow run summary.
+
+For a release produced with this workflow, download its assets and verify each
+installable file with the [GitHub CLI](https://cli.github.com/manual/gh_attestation_verify):
+
+```sh
+gh attestation verify main.js --repo GinaOfTheSea/emberly-obsidian-plugin --signer-workflow GinaOfTheSea/emberly-obsidian-plugin/.github/workflows/release.yml
+gh attestation verify manifest.json --repo GinaOfTheSea/emberly-obsidian-plugin --signer-workflow GinaOfTheSea/emberly-obsidian-plugin/.github/workflows/release.yml
+gh attestation verify styles.css --repo GinaOfTheSea/emberly-obsidian-plugin --signer-workflow GinaOfTheSea/emberly-obsidian-plugin/.github/workflows/release.yml
+```
+
+To require a particular release, also pass `--source-ref refs/tags/<version>`;
+`--source-digest <commit-sha>` can additionally require its exact source commit.
+The same commands work for the license and checksum attachments.
+
+Attestations establish the files' origin and integrity, not that the plugin is free
+of vulnerabilities. Existing releases, including the original `0.1.0`, do not gain
+attestations by changing this workflow. Ship the change in a new version through
+the normal release process; do not move a published tag or replace its assets.
+The Community directory controls when its Scorecard reflects a new release.
 
 ## Submit to the Community directory
 

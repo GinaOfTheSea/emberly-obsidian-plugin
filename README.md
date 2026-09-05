@@ -43,10 +43,11 @@ this plugin.
 
 ## Try it
 
-You'll need **desktop Obsidian 1.13.7 or newer**. This is still an early release;
-we're not in the Community plugins directory yet.
+You'll need **desktop Obsidian 1.13.7 or newer**. Find **Emberly Maps** in
+**Settings → Community plugins → Browse**, install it, and enable it. You can also
+open its [Community listing](https://community.obsidian.md/plugins/emberly-maps).
 
-When a published build is available on the [releases page](https://github.com/GinaOfTheSea/emberly-obsidian-plugin/releases):
+For a manual install, download a build from the [releases page](https://github.com/GinaOfTheSea/emberly-obsidian-plugin/releases):
 
 1. Download `main.js`, `manifest.json`, and `styles.css`.
 2. Put them in `<your vault>/.obsidian/plugins/emberly-maps/`.
@@ -75,7 +76,7 @@ npm ci
 npm run verify
 ```
 
-Install the three files as above. More in the [development notes](./docs/development.md),
+Install the three files as above. See [contributing](./CONTRIBUTING.md), the [development notes](./docs/development.md),
 [folder guide](./docs/repository-structure.md), and [publishing guide](./docs/publishing.md).
 
 ## License

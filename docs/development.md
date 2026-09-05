@@ -125,6 +125,14 @@ Users currently reopen it with Open map. Panel sizing is also session-local.
 
 ## Automated checks
 
+The build applies `scripts/build/pixi-local-images.mjs` to Pixi 6.5.1. Its unused
+network adapter rejects requests, and optional image-bitmap conversion uses the
+image already loaded in memory instead of fetching its URL again. Built-in images
+are bundled; custom map images are resolved from vault attachments. The build
+stops if the patched source or Pixi version changes, so dependency upgrades need
+an explicit review of these two adaptations. Browser tests use the same build
+plugin and check image pixels with network access blocked.
+
 Use the commands that cover the code you changed:
 
 | Command | Checks |
@@ -134,7 +142,7 @@ Use the commands that cover the code you changed:
 | `npm test` | Unit, DOM-adapter, and filesystem fixture tests |
 | `npm run build` | Metadata, types, and production bundles |
 | `npm run verify` | Lint, unit tests, and production build |
-| `npm run test:browser` | Renderer text and window regressions |
+| `npm run test:browser` | Renderer images, text, windows, and pane layout regressions (after building) |
 
 For a focused test run:
 
@@ -153,7 +161,8 @@ npm run test:browser
 
 In a POSIX shell, use `PLAYWRIGHT_CHANNEL=chromium npm run test:browser`.
 
-The browser suite checks labels across rebuilds, selection, collapse, wheel zoom,
+The browser suite checks local image pixels without network requests, tag wrapping
+and panel visibility, labels across rebuilds, selection, collapse, wheel zoom,
 panning, dragging, double-clicking, window migration, WebGL restoration, and
 cleanup. It supplies an adapter for Obsidian's window-migration callback; it does
 not run inside Obsidian. Unit and DOM tests likewise use adapters for the app.

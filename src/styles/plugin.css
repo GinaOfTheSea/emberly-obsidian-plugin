@@ -320,7 +320,7 @@
   box-shadow: var(--shadow-s);
   background: var(--background-primary);
 }
-.emberly-topic-header-popup[hidden] { display: none !important; }
+.emberly-topic-header-popup[hidden] { display: none; }
 .emberly-topic-popup-label { margin-bottom: 12px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
 .emberly-topic-color-palette { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
 .emberly-topic-color-palette > button {
@@ -379,10 +379,9 @@
 .emberly-topic-header-status { margin-top: 8px; font-size: 12px; text-align: center; color: var(--text-muted); overflow-wrap: anywhere; }
 .emberly-topic-header-status:empty { display: none; }
 .emberly-topic-pane.emberly-topic-with-header .inline-title { display: none !important; }
-.emberly-topic-chrome[hidden],
-.emberly-map-settings-panel[hidden],
-.emberly-topic-chrome [hidden],
-.emberly-topic-resource-panel[hidden] { display: none !important; }
+.emberly-topic-pane .emberly-topic-chrome[hidden],
+.emberly-topic-pane .emberly-map-settings-panel[hidden],
+.emberly-topic-pane .emberly-topic-resource-panel[hidden] { display: none; }
 .emberly-topic-tabs {
   display: flex;
   min-height: 49px;
@@ -479,7 +478,7 @@
 .emberly-map-trash-files { max-height: 200px; overflow: auto; font-size: var(--font-ui-small); overflow-wrap: anywhere; }
 .emberly-map-settings-status { margin-top: 12px; color: var(--text-muted); overflow-wrap: anywhere; }
 .emberly-resource-upload { padding: 12px 16px; border-bottom: 1px solid var(--background-modifier-border); }
-.emberly-resource-upload input[hidden] { display: none !important; }
+.emberly-resource-upload input[hidden] { display: none; }
 .emberly-resource-upload .emberly-resource-upload-button {
   display: inline-flex; align-items: center; gap: 8px; height: auto; padding: 6px 0;
   border: 0; box-shadow: none; background: transparent; color: var(--text-normal); font: inherit; font-size: 14px;
@@ -491,11 +490,10 @@
 .emberly-resource-upload-status:empty { display: none; }
 /* ResourceCreateView: one sidebar page, Online / Offline tabs and native forms.
    Hide presentation only; the native Markdown editor and map stay mounted. */
-.emberly-resource-creating > .view-content > .emberly-topic-chrome,
-.emberly-resource-creating .emberly-resource-upload,
-.emberly-resource-creating .emberly-topic-resource-list,
-.emberly-resource-create-page[hidden],
-.emberly-resource-create-page [hidden] { display: none !important; }
+.emberly-topic-pane.emberly-resource-creating > .view-content > .emberly-topic-chrome,
+.emberly-topic-pane.emberly-resource-creating .emberly-resource-upload,
+.emberly-topic-pane.emberly-resource-creating .emberly-topic-resource-list,
+.emberly-topic-pane .emberly-resource-create-page[hidden] { display: none; }
 .emberly-resource-create-page { font-size: 14px; line-height: 1.5; }
 .emberly-resource-create-page .emberly-resource-bar > button {
   padding: 0; border: 0; box-shadow: none; background: transparent; color: var(--text-normal);
@@ -544,7 +542,7 @@
 .emberly-resource-create-status { padding: 0 16px 16px; font-size: 13px; color: var(--text-muted); white-space: pre-wrap; overflow-wrap: anywhere; }
 .emberly-resource-create-status:empty { display: none; }
 .emberly-resource-drag-over .emberly-topic-resource-panel { outline: 2px dashed var(--interactive-accent); outline-offset: -4px; background: var(--background-primary-alt); }
-.emberly-topic-pane.emberly-resource-moving .emberly-topic-chrome > :not(.emberly-resource-move-picker) { display: none !important; }
+.emberly-topic-pane.emberly-resource-moving .emberly-topic-chrome > :not(.emberly-resource-move-picker) { display: none; }
 .emberly-resource-move-picker { padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow: auto; }
 .emberly-resource-move-picker h3, .emberly-resource-move-picker p { margin: 0; }
 .emberly-resource-move-picker p { color: var(--text-muted); font-size: 13px; }
@@ -726,7 +724,6 @@
 .emberly-resource-stars .is-filled svg { stroke: #FFCF54; fill: #FFCF54; }
 .emberly-resource-header .emberly-resource-text-button { min-height: 28px; padding: 2px 4px; color: var(--text-muted); font-size: 12px; font-weight: 400; white-space: nowrap; }
 .emberly-resource-header-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0 12px 24px 16px; }
-.emberly-resource-tag-chips { display: contents; }
 .emberly-resource-tag-chip { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; min-height: 24px; padding: 2px 8px; border-radius: 4px; background: var(--background-secondary); font-size: 12px; }
 .emberly-resource-tag-chip > span { min-width: 0; overflow-wrap: anywhere; }
 .emberly-resource-tag-chip > button { display: grid; flex: 0 0 20px; place-items: center; width: 20px; height: 20px; border-radius: 4px; }
@@ -736,6 +733,13 @@
 .emberly-resource-tag-form > button { padding: 6px 12px; border-radius: 4px; background: var(--background-secondary); }
 .emberly-resource-header-status { padding: 0 16px 12px; color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
 .emberly-resource-header-status:empty { display: none; }
+
+/* Hidden plugin controls must outrank their visible layout rules. Keep native
+   editor overrides separate: Obsidian also changes those with inline styles. */
+.emberly-topic-pane .emberly-topic-chrome [hidden],
+.emberly-topic-pane .emberly-map-settings-panel [hidden],
+.emberly-topic-pane .emberly-topic-resource-panel [hidden],
+.emberly-topic-pane .emberly-resource-create-page [hidden] { display: none; }
 
 @media (max-width: 800px) {
   .emberly-map-view .emberly-canvas { padding: 0; display: block; grid-template-columns: none; }

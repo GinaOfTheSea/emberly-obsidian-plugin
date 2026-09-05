@@ -1,5 +1,15 @@
 import { EmberlyEngineHost } from "../../src/emberly-engine/engine-host";
 import type { EmberlyMap, EmberlyNode } from "../../src/shared/types";
+import { BaseTexture, ImageResource, Renderer, Texture } from "@pixi/core";
+import { Container } from "@pixi/display";
+import { Sprite } from "@pixi/sprite";
+import { CanvasRenderer } from "@pixi/canvas-renderer";
+import { ALPHA_MODES, SCALE_MODES } from "@pixi/constants";
+import { settings } from "@pixi/settings";
+
+const imageHarness = { BaseTexture, ImageResource, Renderer, Texture, Container, Sprite, CanvasRenderer, ALPHA_MODES, SCALE_MODES, settings };
+declare global { interface Window { emberlyImages: typeof imageHarness; } }
+window.emberlyImages = imageHarness;
 
 declare global { interface Window { emberlySmoke?: { ok: boolean; message: string }; } }
 

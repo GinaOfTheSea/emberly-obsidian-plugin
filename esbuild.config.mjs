@@ -1,6 +1,7 @@
 import esbuild from "esbuild";
 import { builtinModules } from "node:module";
 import path from "node:path";
+import { pixiLocalImages } from "./scripts/build/pixi-local-images.mjs";
 
 const production = process.argv[2] === "production";
 const pluginContext = await esbuild.context({
@@ -9,6 +10,7 @@ const pluginContext = await esbuild.context({
     "@emberly/dataplane": path.resolve("src/emberly-engine/adapter/dataplane.ts"),
   },
   bundle: true,
+  plugins: [pixiLocalImages()],
   external: ["obsidian", "electron", "@codemirror/autocomplete", "@codemirror/collab", "@codemirror/commands", "@codemirror/language", "@codemirror/lint", "@codemirror/search", "@codemirror/state", "@codemirror/view", "@lezer/common", "@lezer/highlight", "@lezer/lr", ...builtinModules],
   format: "cjs",
   target: "es2022",
